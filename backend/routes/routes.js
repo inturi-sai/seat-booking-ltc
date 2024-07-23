@@ -15,11 +15,14 @@ router.put('/updateSeatingCapacityAdmin/:id',controller.updateSeatingCapacityAdm
 router.delete('/deleteSeatingCapacityAdmin/:id',controller.deleteSeatingCapacityAdmin);
 router.post('/createAllocatedSetsAdmin',controller.createAllocatedSetsAdmin);
 router.get('/getSeatingCapacityAdminByFilter',controller.getSeatingCapacityAdminByFilter);
-router.get('/getAllocationForAdminMatrix',controller.getAllocationForAdminMatrix);
 
 //HOE page routes
 router.get('/getHOEFromTable/:id', controller.getHOEFromTable);
 router.get('/getManagersByHOEIdFromTable/:id', controller.getManagersByHOEIdFromTable);
 router.put('/updateManagerData/:id', controller.updateManagerData);
 
+//Matrix
+
+router.get('/getAllocationForAdminMatrix',controller.getAllocationForAdminMatrix);
+router.get('/getAllocationForHOEMatrix',controller.getAllocationForHOEMatrix);
 module.exports = router;
