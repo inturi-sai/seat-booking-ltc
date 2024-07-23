@@ -278,6 +278,52 @@ const totalCapacity = await getCapacity(values,whereClause,type);
 let mergedArray = mergeArrays(totalCapacity, allocatedCount, type);
 return mergedArray;
 }
+const getHOETotalAllocatedQuery=async()=>{
+    const sql = `select bu_id,SUM(total) as total from seat_allocation WHERE bu_id = $1 group by bu_id`;
+    return sql;
+}
+const getHOETotalAllocatedCount=async(buId)=>{
+  let values = [buId];
+  const query=await getHOETotalAllocatedQuery()
+     try {
+      const { rows } = await pool.query(query,values);
+      return rows;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+}
+const getHOEManagerAllocatedQuery=async(whereClause)=>{
+  const sql = `select hoe_id as bu_id,business_unit, SUM(array_length(seats_array, 1)) AS allocated  from manager_allocation ${whereClause} group by hoe_id,business_unit`;
+  return sql;
+}
+const getHOEManagerAllocatedCount=async(whereClause,values)=>{
+const query=await getHOEManagerAllocatedQuery(whereClause); 
+   try {
+    const { rows } = await pool.query(query,values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
+}
+
+const getAllocationForHOEMatrix=async(req)=>{ 
+  const { manager_id,bu_id } = req.query;
+  let values = [bu_id];
+  let index = 1;
+  let whereConditions = [`hoe_id = $${index}`];
+  // if (manager_id) {
+  //   index++;
+  //   values.push(manager_id);
+  //   whereConditions.push(`id = $${index}`);
+  // } 
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+  const allocatedCount = await getHOETotalAllocatedCount(bu_id);
+  const managersCount = await getHOEManagerAllocatedCount(whereClause,values);
+  let mergedArray = mergeArrays(allocatedCount,managersCount, "bu_id");
+  return mergedArray;
+  }
 
 module.exports = {
   insertUser,
@@ -293,6 +339,7 @@ module.exports = {
   getHOEFromTable, 
   getManagersByHOEIdFromTable, 
   updateManagerData,
-  getAllocationForAdminMatrix
+  getAllocationForAdminMatrix,
+  getAllocationForHOEMatrix
 };
 
