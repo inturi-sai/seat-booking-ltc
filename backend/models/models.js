@@ -178,6 +178,106 @@ const updateManagerData = async (id, seats) => {
     throw err;
   }
 };
+const getQuery=(type,whereClause)=>{
+ let query=""
+  if(type=="country"){
+   query = ` SELECT country,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country`
+  }else if(type=="state"){
+   query = ` SELECT country,state,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state`
+  }else if(type=="city"){
+     query = ` SELECT country,state,city,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city`;
+  }else if(type=="floor"){
+     query = ` SELECT country,state,city,floor,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city,floor`;
+  }
+  return query;
+}
+const getQueryCapacity=(type,whereClause)=>{
+  let query=""
+  if(type=="country"){
+    query = ` SELECT country,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country`;
+  }else if(type=="state"){
+    query = ` SELECT country,state,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state`;
+
+  }else if(type=="city"){
+    query = ` SELECT country,state,city,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city`;
+
+  }else if(type=="floor"){
+    query = ` SELECT country,state,city,floor,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,floor`;
+
+  }
+  return query;
+}
+const getAllocatedCount=async(values,whereClause,type)=>{
+  const query=getQuery(type,whereClause)
+     try {
+      const { rows } = await pool.query(query,values);
+      console.log(rows)
+      return rows;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+}
+const getCapacity=async(values,whereClause,type)=>{
+  const query=getQueryCapacity(type,whereClause);
+  if(whereClause==""){
+    values=[]
+  }
+     try {
+      const { rows } = await pool.query(query,values);
+      return rows;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+}
+const mergeArrays=(array1, array2, key)=> {
+  let merged = {};
+  // Merge array1 into merged object
+  array1.forEach(item => {
+      merged[item[key]] = { ...merged[item[key]], ...item };
+  });
+  // Merge array2 into merged object
+  array2.forEach(item => {
+    let obj={...item,unallocated:merged[item[key]].total-item.allocated} 
+      merged[item[key]] = { ...merged[item[key]], ...obj };
+  });
+  // Convert merged object back to array
+  let mergedArray = Object.values(merged);
+
+  return mergedArray;
+}
+const getAllocationForAdminMatrix=async(req)=>{ 
+const { country, state, city, floor,type } = req.query;
+let values = [];
+let whereConditions = [];
+let index = 1;
+if (country) {
+  values.push(country);
+  whereConditions.push(`country = $${index}`);
+  index++;
+}
+if (state) {
+  values.push(state);
+  whereConditions.push(`state = $${index}`);
+  index++;
+}
+if (city) {
+  values.push(city);
+  whereConditions.push(`city = $${index}`);
+  index++;
+}
+if (floor) {
+  values.push(parseInt(floor, 10));
+  whereConditions.push(`floor = $${index}`);
+  index++;
+} 
+const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+const allocatedCount = await getAllocatedCount(values,whereClause,type);
+const totalCapacity = await getCapacity(values,whereClause,type);
+let mergedArray = mergeArrays(totalCapacity, allocatedCount, type);
+return mergedArray;
+}
 
 module.exports = {
   insertUser,
@@ -192,6 +292,7 @@ module.exports = {
   getSeatingCapacityAdmin,
   getHOEFromTable, 
   getManagersByHOEIdFromTable, 
-  updateManagerData
+  updateManagerData,
+  getAllocationForAdminMatrix
 };
 

@@ -15,6 +15,7 @@ router.put('/updateSeatingCapacityAdmin/:id',controller.updateSeatingCapacityAdm
 router.delete('/deleteSeatingCapacityAdmin/:id',controller.deleteSeatingCapacityAdmin);
 router.post('/createAllocatedSetsAdmin',controller.createAllocatedSetsAdmin);
 router.get('/getSeatingCapacityAdminByFilter',controller.getSeatingCapacityAdminByFilter);
+router.get('/getAllocationForAdminMatrix',controller.getAllocationForAdminMatrix);
 
 //HOE page routes
 router.get('/getHOEFromTable/:id', controller.getHOEFromTable);
