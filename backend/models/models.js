@@ -62,9 +62,9 @@ const getSeatingCapacityAdmin=async()=>{
 }
 
 const createSeatingCapacityAdmin=async(body)=>{
-  const {country,state,city,floor,capacity}=body
-  const values= [country,state,city,parseInt(floor),parseInt(capacity)]
-  const query = 'INSERT INTO seating_capacity (country,state,city,floor,capacity) VALUES ($1, $2, $3,$4,$5);';
+  const {country,state,city,floor,capacity,campus}=body
+  const values= [country,state,city,campus,parseInt(floor),parseInt(capacity)]
+  const query = 'INSERT INTO seating_capacity (country,state,city,campus,floor,capacity) VALUES ($1, $2, $3,$4,$5,$6);';
   //  return values
     try {
       const { rows } = await pool.query(query, values);
@@ -108,11 +108,9 @@ try {
 }
 
 const createAllocatedSetsAdmin=async(body)=>{
-  const {country,state,city,floor,bu,seats}=body
-  const values= [country,state,city,parseInt(floor),bu,seats,seats.length>0?seats.length:0]
-  console.log(values,"jjjjjj")
-  const query = 'INSERT INTO seat_allocation (country,state,city,floor,bu_id,seats,total) VALUES ($1, $2, $3,$4,$5,$6::int[],$7);';
-  //  return values
+  const {country,state,city,campus,floor,bu,seats}=body
+  const values= [country,state,city,campus,parseInt(floor),bu,seats,seats.length>0?seats.length:0] 
+  const query = 'INSERT INTO seat_allocation (country,state,city,campus,floor,bu_id,seats,total) VALUES ($1, $2, $3,$4,$5,$6,$7::int[],$8);';
     try {
       const { rows } = await pool.query(query, values);
       return rows;
@@ -122,8 +120,7 @@ const createAllocatedSetsAdmin=async(body)=>{
     }
 }
 
-const getSeatingCapacityAdminByFilter=async(values)=>{
-  console.log(values,"5555")
+const getSeatingCapacityAdminByFilter=async(values)=>{ 
   const query = `SELECT SUM(capacity) FROM seating_capacity where country=$1 and state=$2 and city=$3 and floor=$4`;
      try {
       const { rows } = await pool.query(query, values);

@@ -25,35 +25,10 @@ const initialState = {
   country: "",
   state: "",
   city: "",
+  campus:"",
   floor: "",
   capacity: "",
-};
-const data = [
-  {
-    id: 1,
-    country: "india",
-    city: "hyderabad",
-    state: "telangana",
-    floor: "5",
-    capacity: 100,
-  },
-  {
-    id: 2,
-    country: "india",
-    city: "hyderabad",
-    state: "telangana",
-    floor: "6",
-    capacity: 150,
-  },
-  {
-    id: 3,
-    country: "india",
-    city: "hyderabad",
-    state: "telangana",
-    floor: "6",
-    capacity: 200,
-  },
-];
+}; 
 const capacity = 100;
 const ConfigureSeatAllocation = () => {
   const initialSeats = Array(capacity).fill({ status: 0 });
@@ -68,6 +43,7 @@ const ConfigureSeatAllocation = () => {
     country:'',
     state:'',
     city:'',
+    campus:'',
     floor:''
   });
   const navigate = useNavigate();
@@ -110,6 +86,9 @@ const ConfigureSeatAllocation = () => {
     if(!values.city){
       newErrors.city="required"
      }
+    if(!values.campus){
+      newErrors.campus="required"
+     }
     if(!values.floor){
       newErrors.floor="required"
      }
@@ -123,12 +102,9 @@ const ConfigureSeatAllocation = () => {
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
     } else {
-      // No errors, proceed with form submission (e.g., API call)
-      console.log('Form data submitted:');
       setErrors({});
-      // Reset form or redirect user after successful submission
     }
-    if(!values.country || !values.state || !values.city || !values.floor || !values.capacity){ 
+    if(!values.country || !values.state || !values.city || !values.floor || !values.capacity || !values.campus){ 
      
       return;
 
@@ -144,7 +120,6 @@ const ConfigureSeatAllocation = () => {
     await axios
       .post(`${baseurl}/createSeatingCapacityAdmin`, values)
       .then((res) => {
-        console.log(res.data, "hhhhhhhhh");
         if (res.data) {
           setCapacityList(res.data);
           getConfiguredData();
@@ -162,7 +137,6 @@ const ConfigureSeatAllocation = () => {
         values
       )
       .then((res) => {
-        console.log(res.data, "hhhhhhhhh");
         if (res.data) {
           getConfiguredData();
           clearAllocation();
@@ -197,7 +171,6 @@ const ConfigureSeatAllocation = () => {
     await axios
       .delete(`${baseurl}/deleteSeatingCapacityAdmin/${row.id}`)
       .then((res) => {
-        console.log(res.data, "hhhhhhhhh");
         if (res.data) {
           getConfiguredData();
         }
@@ -206,7 +179,6 @@ const ConfigureSeatAllocation = () => {
         console.log(err);
       });
   };
-  console.log(allocationData, "seats", values);
   return (
     <div className="seatAllocationContainer">
       <Grid container spacing={2} justifyContent={"center"}>
@@ -269,7 +241,7 @@ const ConfigureSeatAllocation = () => {
                   <MenuItem value={"telangana"}>Telangana</MenuItem>
                   <MenuItem value={"karnataka"}>Karnataka</MenuItem>
                   <MenuItem value={"alaska"}>Alaska</MenuItem>
-                  <MenuItem value={"scotland"}>Scotland</MenuItem>
+                  <MenuItem value={"england"}>England</MenuItem>
 
                 </Select>
                 {errors.state?<div className="fontFamily" style={{color:"red",paddingTop:"5px", fontSize:"12px"}}>State is required</div>:""}
@@ -292,10 +264,32 @@ const ConfigureSeatAllocation = () => {
                   <MenuItem value={"denver"}>Denver</MenuItem>
                   <MenuItem value={"sanfransisco"}>Sanfransisco</MenuItem>
                   <MenuItem value={"london"}>London</MenuItem>
+                  <MenuItem value={"Sunderland"}>Sunderland</MenuItem>                  
                   <MenuItem value={"bangalore"}>Bristol</MenuItem>
 
                 </Select>
                 {errors.city?<div className="fontFamily" style={{color:"red",paddingTop:"5px", fontSize:"12px"}}>City is required</div>:""}
+
+              </FormControl>
+            </Box>
+            <Box sx={{ minWidth: 120 }}>
+              <FormControl sx={{ m: 2, minWidth: "90%" }} size="medium">
+                <InputLabel id="demo-simple-select-label">Location</InputLabel>
+                <Select
+                  labelId="demo-simple-select-label"
+                  id="demo-simple-select"
+                  value={values.campus}
+                  label="Location"
+                  name="campus"
+                  disabled={configFlag == "Edit"}
+                  onChange={handleChange}
+                >
+                  <MenuItem value={"knowledge city"}>Knowledge City</MenuItem>
+                  <MenuItem value={"we work"}>We Work</MenuItem>
+                  <MenuItem value={"knowledge park"}>Knowledge Park</MenuItem> 
+                  
+                </Select>
+                {errors.campus?<div className="fontFamily" style={{color:"red",paddingTop:"5px", fontSize:"12px"}}>Location is required</div>:""}
 
               </FormControl>
             </Box>
@@ -390,6 +384,7 @@ const ConfigureSeatAllocation = () => {
                       <TableCell align="left">Country&nbsp;</TableCell>
                       <TableCell align="left">State&nbsp;</TableCell>
                       <TableCell align="left">City&nbsp;</TableCell>
+                      <TableCell align="left">Location&nbsp;</TableCell>
                       <TableCell align="left">Floor&nbsp;</TableCell>
                       <TableCell align="left">Capacity&nbsp;</TableCell>
                       <TableCell align="left">Edit&nbsp;</TableCell>
@@ -402,6 +397,7 @@ const ConfigureSeatAllocation = () => {
                         <TableRow key={row.id}>
                           <TableCell align="left">{row.country}</TableCell>
                           <TableCell align="left">{row.state}</TableCell>
+                          <TableCell align="left">{row.campus}</TableCell>
                           <TableCell align="left">{row.city}</TableCell>
                           <TableCell align="left">{row.floor}</TableCell>
                           <TableCell align="left">{row.capacity}</TableCell>
