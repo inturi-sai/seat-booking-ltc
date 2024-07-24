@@ -199,7 +199,10 @@ const getQueryCapacity=(type,whereClause)=>{
     query = ` SELECT country,state,city,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city`;
 
   }else if(type=="floor"){
-    query = ` SELECT country,state,city,floor,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,floor`;
+    query = ` SELECT country,state,city,campus,floor,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,campus,floor`;
+
+  }else if(type=="campus"){
+    query = ` SELECT country,state,city,campus,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,campus`;
 
   }
   return query;
@@ -245,30 +248,35 @@ const mergeArrays=(array1, array2, key)=> {
   return mergedArray;
 }
 const getAllocationForAdminMatrix=async(req)=>{ 
-const { country, state, city, floor,type } = req.query;
+const { country, state, city, floor,type,campus } = req.query;
 let values = [];
 let whereConditions = [];
 let index = 1;
 if (country) {
   values.push(country);
-  whereConditions.push(`country = $${index}`);
+  whereConditions.push(`LOWER(country) = LOWER($${index})`);
   index++;
 }
 if (state) {
   values.push(state);
-  whereConditions.push(`state = $${index}`);
+  whereConditions.push(`LOWER(state) = LOWER($${index})`);
   index++;
 }
 if (city) {
   values.push(city);
-  whereConditions.push(`city = $${index}`);
+  whereConditions.push(`LOWER(city) = LOWER($${index})`);
+  index++;
+}
+if (campus) {
+  values.push(campus);
+  whereConditions.push(`LOWER(campus) = LOWER($${index})`);
   index++;
 }
 if (floor) {
   values.push(parseInt(floor, 10));
   whereConditions.push(`floor = $${index}`);
   index++;
-} 
+}
 const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 const allocatedCount = await getAllocatedCount(values,whereClause,type);
 const totalCapacity = await getCapacity(values,whereClause,type);
