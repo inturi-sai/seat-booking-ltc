@@ -201,6 +201,43 @@ const mergeArrays = (array1, array2, key) => {
   return mergedArray;
 }
 
+const getAllocationForAdminMatrix=async(req)=>{ 
+    const { country, state, city, floor,type,campus} = req.query;
+    let values = [];
+    let whereConditions = [];
+    let index = 1;
+    if (country) {
+      values.push(country);
+      whereConditions.push(`LOWER(country) = LOWER($${index})`);
+      index++;
+    }
+    if (state) {
+      values.push(state);
+      whereConditions.push(`LOWER(state) = LOWER($${index})`);
+      index++;
+    }
+    if (city) {
+      values.push(city);
+      whereConditions.push(`LOWER(city) = LOWER($${index})`);
+      index++;
+    }
+    if (campus) {
+      values.push(campus);
+      whereConditions.push(`LOWER(campus) = LOWER($${index})`);
+      index++;
+    }
+    if (floor) {
+      values.push(parseInt(floor, 10));
+      whereConditions.push(`floor = $${index}`);
+      index++;
+    } 
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+    
+      const allocatedCount = await getAllocatedCount(values,whereClause,type);
+      const totalCapacity = await getCapacity(values,whereClause,type);
+      let mergedArray = mergeArrays(totalCapacity, allocatedCount, type);
+      return mergedArray;  
+    }
 // models.js
 
 
@@ -390,6 +427,69 @@ const updateEmployeeSeatData = async (id, seatData) => {
   }
 };
 
+const getBuQuery=(type,whereClause)=>{
+    let sql=''
+    if(type=="bu"){
+      sql=`select sa.bu_id,bu.name as bu_name,sa.country,sa.state,sa.city,sa.campus,sa.floor,SUM(array_length(sa.seats, 1)) as total,SUM(array_length(ma.seats_array, 1)) as allocated from seat_allocation as sa INNER JOIN manager_allocation as ma ON(sa.bu_id=ma.hoe_id) INNER JOIN business_unit as bu ON(bu.id=ma.hoe_id) ${whereClause}
+        group by sa.bu_id,sa.country,sa.state,sa.city,sa.campus,sa.floor,bu.id`
+    }
+    return sql;
+    }
+    const getAllocatedBuByFloorCount=async(values,whereClause,type)=>{ 
+      const query=getBuQuery(type,whereClause) 
+         try {
+          const { rows } = await pool.query(query,values); 
+          return rows;
+        } catch (err) {
+          console.error('Error executing query', err);
+          throw err;
+        }
+    }
+
+const getAllocationForBUwise=async(req)=>{ 
+  const { country, state, city, floor,type,campus,bu} = req.query;
+  let values = [];
+  let whereConditions = [];
+  let index = 1;
+  if (country) {
+    values.push(country);
+    whereConditions.push(`LOWER(sa.country) = LOWER($${index})`);
+    index++;
+  }
+  if (state) {
+    values.push(state);
+    whereConditions.push(`LOWER(sa.state) = LOWER($${index})`);
+    index++;
+  }
+  if (city) {
+    values.push(city);
+    whereConditions.push(`LOWER(sa.city) = LOWER($${index})`);
+    index++;
+  }
+  if (campus) {
+    values.push(campus);
+    whereConditions.push(`LOWER(sa.campus) = LOWER($${index})`);
+    index++;
+  }
+  if (floor) {
+    values.push(parseInt(floor, 10));
+    whereConditions.push(`sa.floor = $${index}`);
+    index++;
+  } 
+  if (bu) {
+    values.push(parseInt(floor, 10));
+    whereConditions.push(`sa.bu_id = $${index}`);
+    index++;
+  } 
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+  if(type=="bu"){
+    const allocatedCount = await getAllocatedBuByFloorCount(values,whereClause,type); 
+    return allocatedCount;
+  }else{
+     return []
+  }  
+  }
+
 module.exports = {
   insertUser,
   findUserByEmailAndPassword,
@@ -409,5 +509,7 @@ module.exports = {
   updateManagerData,
   getManagerFromTable,
   getEmployeesByManagerIdFromTable,
-  updateEmployeeSeatData
+  updateEmployeeSeatData,
+  getAllocationForBUwise,
+  getAllocationForAdminMatrix
 };
