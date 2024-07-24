@@ -1,4 +1,4 @@
-import { TextField } from "@mui/material";
+import { Alert, Snackbar, TextField } from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
@@ -51,7 +51,7 @@ const SeatAllocationAdmin = () => {
   const [floorList, setFloors] = useState([]);
   const [layoutView, setLayoutView] = useState(initialBuState);
   const [capacityData, setCapacityData] = useState([]);
-  
+  const [openSnackbar, setOpenSnackbar] = useState(false);
   const navigate = useNavigate();
   React.useEffect(() => {
     getBu();
@@ -73,7 +73,9 @@ const SeatAllocationAdmin = () => {
       copyValues();
     }
   }, [maxSeats, allocatedSeatsByGlobal]);
-
+  const handleSnackbarClose = () => {
+    setOpenSnackbar(false);
+  };
   const handleCountries = (data) => {
     let countryList = [];
 
@@ -534,6 +536,7 @@ const SeatAllocationAdmin = () => {
       .then((res) => {
         if (res.data) {
           setAllocateSeatSecFlag(false);
+          setOpenSnackbar(true); 
         }
       })
       .catch((err) => {
@@ -562,6 +565,16 @@ const SeatAllocationAdmin = () => {
   }
   return (
     <div className="seatAllocationContainer">
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={2000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%' }}>
+          Seats Allocated Successfully!
+        </Alert>
+      </Snackbar>
       <Grid container spacing={2} justifyContent={"center"}>
         <Grid item md={12} sx={{ margin: "0% 3%" }}>
           <Box sx={{ textAlign: "right", margin: "1%" }}>
