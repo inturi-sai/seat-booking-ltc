@@ -16,10 +16,11 @@ import "./seatAllocationAdmin.css"; // Make sure you have the correct path and n
 
 
 const initialBuState = {
-  country: "india",
-  state: "telangana",
-  city: "hyderabad",
-  floor: "5",
+  country: "",
+  state: "",
+  city: "",
+  campus: "",
+  floor: "",
   bu: "",
   maxSeats: 0,
 };
@@ -38,7 +39,7 @@ const SeatAllocationAdmin = () => {
   const [values, setValues] = React.useState(initialBuState);
   const [allocationData, setData] = React.useState([]);
   const [allocateSeatSecFlag, setAllocateSeatSecFlag] = useState(false);
-  const [capacity, setCapacity] = useState(0);
+  const [errors, setErrors] = useState({});
   const [seatEnable, setSeatsEnable] = useState(false);
   const [allocatedSeatsByGlobal, setallocatedSeatsByGlobal] = useState([]);
   const [maxSeats, setMaxSeats] = useState(0);
@@ -46,20 +47,21 @@ const SeatAllocationAdmin = () => {
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
+  const [campuses, setCampuses] = useState([]);
   const [floorList, setFloors] = useState([]);
-  const [submitted, setSubmitted] = useState(false);
+  const [layoutView, setLayoutView] = useState(initialBuState);
   const [capacityData, setCapacityData] = useState([]);
-
+  
   const navigate = useNavigate();
   React.useEffect(() => {
-    // getSeatingCapacityAdmin();
     getBu();
     getAllocationData();
+    getCapacityData();
+
   }, []);
   React.useEffect(() => {
     if (values.floor) {
       getAllocationData();
-      getCapacityData();
       getConfiguredDataByFilter(values.floor ? values.floor : "5");
     }
   }, [values.floor,values.bu]);
@@ -68,7 +70,6 @@ const SeatAllocationAdmin = () => {
       (allocatedSeatsByGlobal && allocatedSeatsByGlobal.length > 0) ||
       maxSeats > 0
     ) {
-      console.log(allocationData, "allocationData");
       copyValues();
     }
   }, [maxSeats, allocatedSeatsByGlobal]);
@@ -77,7 +78,6 @@ const SeatAllocationAdmin = () => {
     let countryList = [];
 
     for (let i = 0; i < data.length; i++) {
-      console.log(data[i], "jjjjj");
       let findItem = countryList.findIndex(
         (coun) => data[i].country == coun.name
       );
@@ -86,53 +86,8 @@ const SeatAllocationAdmin = () => {
         countryList.push({ name: data[i].country });
       }
     }
-    console.log(countryList, "countryList");
     setCountries(countryList);
-  };
-  const handleInitialStates = (data) => {
-    let statesList = [];
-
-    for (let i = 0; i < data.length; i++) {
-      let findItem = statesList.findIndex(
-        (coun) => data[i].state == coun.name && data[i].country == "india"
-      );
-
-      if (findItem == -1) {
-        statesList.push({ name: data[i].state });
-      }
-    }
-    console.log(statesList, "countryList");
-    setStates(statesList);
-  };
-  const handleInitialCities = (data) => {
-    let cityList = [];
-
-    for (let i = 0; i < data.length; i++) {
-      let findItem = cityList.findIndex(
-        (coun) => data[i].city == coun.name && data[i].country == "india"
-      );
-
-      if (findItem == -1) {
-        cityList.push({ name: data[i].city });
-      }
-    }
-    console.log(cityList, "countryList");
-    setCities(cityList);
-  };
-  const handleInitialFloor = (data) => {
-    let floorList = [];
-
-    for (let i = 0; i < data.length; i++) {
-      let findItem = floorList.findIndex(
-        (coun) => data[i].floor == coun.name && data[i].country == "india"
-      );
-
-      if (findItem == -1) {
-        floorList.push({ name: data[i].floor });
-      }
-    }
-    setFloors(floorList);
-  };
+  }; 
   const getBu = async () => {
     await axios
       .get(`${baseurl}/getBu`)
@@ -164,10 +119,15 @@ const SeatAllocationAdmin = () => {
       .then((res) => {
         if (res.data && res.data.length > 0) {
           setCapacityData(res.data);
-          handleCountries(res.data);
-          handleInitialStates(res.data);
-          handleInitialCities(res.data);
-          handleInitialFloor(res.data);
+          setTimeout(()=>{
+            setValues({...values,country:res.data[0].country,state:res.data[0].state,city:res.data[0].city,campus:res.data[0].campus,floor:res.data[0].floor})
+            setLayoutView({...layoutView,country:res.data[0].country,state:res.data[0].state,city:res.data[0].city,campus:res.data[0].campus,floor:res.data[0].floor})
+            setStates([{name:res.data[0].state}])
+            setCities([{name:res.data[0].city}])
+            setCampuses([{name:res.data[0].campus}])
+            setFloors([{name:res.data[0].floor}])
+          },1000)
+          handleCountries(res.data); 
         }
       })
       .catch((err) => {
@@ -195,7 +155,6 @@ const SeatAllocationAdmin = () => {
         stateList.push({ name: data[i].state });
       }
     }
-
     setStates(stateList);
   };
   const handleCities = (data, state) => {
@@ -215,7 +174,25 @@ const SeatAllocationAdmin = () => {
 
     setCities(cityList);
   };
-  const handleFloor = (data, city) => {
+  const handleCampus = (data, city) => {
+    let campusList = [];
+
+    for (let i = 0; i < data.length; i++) {
+      let findItem = campusList.findIndex((coun) => data[i].campus == coun.name);
+
+      if (
+        findItem == -1 &&
+        data[i].country == values.country &&
+        data[i].state == values.state && 
+        data[i].city == city
+      ) {
+        campusList.push({ name: data[i].campus });
+      }
+    }
+
+    setCampuses(campusList);
+  };
+  const handleFloor = (data, campus) => {
     let floorList = [];
 
     for (let i = 0; i < data.length; i++) {
@@ -225,7 +202,8 @@ const SeatAllocationAdmin = () => {
         findItem == -1 &&
         data[i].country == values.country &&
         data[i].state == values.state &&
-        data[i].city == city
+        data[i].city == values.city &&
+        data[i].campus ==campus
       ) {
         floorList.push({ name: data[i].floor });
       }
@@ -242,11 +220,11 @@ const SeatAllocationAdmin = () => {
         country: "",
         floor: "",
         city: "",
+        campus:"",
         state: "",
         selected: 0,
         status: 0,
       };
-      console.log(allocatedSeatsByGlobal, "allocatedSeatsByGlobal");
       if (allocatedSeatsByGlobal.length > 0) {
         allocatedSeatsByGlobal.map((obj, j) => {
           if (obj.seats && obj.seats.includes(i + 1)) {
@@ -258,6 +236,7 @@ const SeatAllocationAdmin = () => {
               bu: obj.bu_id,
               floor: obj.floor,
               city: obj.city,
+              campus: obj.campus,
               state: obj.state,
               seatNo: i + 1,
             };
@@ -293,6 +272,7 @@ const SeatAllocationAdmin = () => {
         [event.target.name]: event.target.value,
         state: "",
         city: "",
+        campus: "",
         floor: 0,
         bu: 0,
         maxSeats: 0,
@@ -303,15 +283,26 @@ const SeatAllocationAdmin = () => {
         ...values,
         [event.target.name]: event.target.value,
         city: "",
+        campus: "",
         floor: 0,
         bu: 0,
         maxSeats: 0,
       });
     } else if (event.target.name == "city") {
-      handleFloor(capacityData, event.target.value);
+      handleCampus(capacityData, event.target.value);
       setValues({
         ...values,
         [event.target.name]: event.target.value,
+        campus: "",
+        floor: 0,
+        bu: 0,
+        maxSeats: 0,
+      });
+    }else if (event.target.name == "campus") {
+      handleFloor(capacityData, event.target.value);
+      setValues({
+        ...values,
+        [event.target.name]: event.target.value, 
         floor: 0,
         bu: 0,
         maxSeats: 0,
@@ -319,7 +310,9 @@ const SeatAllocationAdmin = () => {
     } else if (event.target.name == "floor") {
       // setMaxSeats(0);
       getConfiguredDataByFilter(event.target.value);
-
+      setLayoutView({...values,floor
+        :event.target.value
+      })
       setValues({
         ...values,
         [event.target.name]: event.target.value,
@@ -335,6 +328,7 @@ const SeatAllocationAdmin = () => {
       });
     } else {
       setValues({ ...values, [event.target.name]: event.target.value });
+      setErrors({...errors,maxSeats:""})
     }
   };
   const colorCodeF = (bu, selected) => {
@@ -343,12 +337,30 @@ const SeatAllocationAdmin = () => {
     if (buData) {
       colorCode = buData.colorCode;
     }
-    colorCode = selected && colorCode ? colorCode : "#d1cdcd";
+    colorCode = selected && colorCode ? colorCode : "#fff";
     return colorCode;
   };
+  const validate = () => {
+    const newErrors = {};
+    if(!values.maxSeats || values.maxSeats>getBuCount("")){
+      if(values.maxSeats>getBuCount("")){
+          newErrors.maxSeats="You have the capacity of "+getBuCount("")
+      }else{
+        newErrors.maxSeats="required"
+      }
+     }
+    return newErrors;
+  };
   const handleSelectSeats = () => {
-    setSeatsEnable(true);
-    setAllocateSeatSecFlag(false);
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setSeatsEnable(false);
+    } else {
+      setErrors({});
+      setSeatsEnable(true);
+      setAllocateSeatSecFlag(false);
+    } 
   };
   const handleAllocateSets = (copySeats, getUnallocated) => {
     copySeats.map((copyseat, j) => {
@@ -358,6 +370,7 @@ const SeatAllocationAdmin = () => {
           copyseat.status = 1;
           copyseat.bu = values.bu;
           copyseat.city = values.city;
+          copyseat.campus = values.campus;
           copyseat.state = values.state;
           copyseat.country = values.country;
           copyseat.floor = parseInt(values.floor);
@@ -424,7 +437,6 @@ const SeatAllocationAdmin = () => {
       if (getUnallocated.length == parseInt(values.maxSeats)) {
         copySeats = handleAllocateSets(copySeats, getUnallocated);
       } else {
-        console.log("B");
         let getUnallocatedLessSeats = getDataFromIndexToBack(
           copySeats,
           index,
@@ -433,7 +445,6 @@ const SeatAllocationAdmin = () => {
         copySeats = handleAllocateSets(copySeats, getUnallocatedLessSeats);
       }
     } else if (selectedSeats.length == maxSeats) {
-      console.log("c");
       copySeats.map((copyseat, j) => {
         if (copyseat.status == 1 && copyseat.selected == 1) {
           console.log(copyseat);
@@ -441,6 +452,7 @@ const SeatAllocationAdmin = () => {
           copyseat.status = 0;
           copyseat.bu = "";
           copyseat.city = "";
+          copyseat.campus = "";
           copyseat.state = "";
           copyseat.country = "";
           copyseat.floor = "";
@@ -468,7 +480,6 @@ const SeatAllocationAdmin = () => {
       if (getUnallocated.length == values.maxSeats) {
         copySeats = handleAllocateSets(copySeats, getUnallocated);
       } else {
-        console.log("B");
         let getUnallocatedLessSeats = getDataFromIndexToBack(
           copySeats,
           index,
@@ -485,7 +496,7 @@ const SeatAllocationAdmin = () => {
     seats.forEach((obj, index) => {
       if (obj.selected == 1 && obj.status == 1) {
         console.log(values.country, obj.country);
-        let key = `${obj.country}-${obj.state}-${obj.city}-${obj.floor}-${obj.bu}`;
+        let key = `${obj.country}-${obj.state}-${obj.city}-${obj.campus}-${obj.floor}-${obj.bu}`;
 
         if (result[key]) {
           result[key].seats.push(obj.seatNo);
@@ -494,6 +505,7 @@ const SeatAllocationAdmin = () => {
             country: values.country,
             state: values.state,
             city: values.city,
+            campus: values.campus,
             bu: values.bu,
             floor: parseInt(values.floor),
             seats: [obj.seatNo],
@@ -511,7 +523,6 @@ const SeatAllocationAdmin = () => {
     await axios
       .post(`${baseurl}/createAllocatedSetsAdmin`, obj)
       .then((res) => {
-        console.log(res.data, "hhhhhhhhh");
         if (res.data) {
           setAllocateSeatSecFlag(false);
         }
@@ -525,14 +536,18 @@ const SeatAllocationAdmin = () => {
   };
   const getBuCount=(id)=>{
     if(seats && seats.length>0 && id){
-      let records= seats&&seats.filter((seat,i)=>seat.bu==id && seat.selected) 
+      let records= seats&&seats.filter((seat,i)=>seat.bu==id && seat.selected)
       if(records.length>0){
         return records.length
+      }else{
+        return 0
       }
     }else{
-      let records= seats.filter((seat,i)=>seat.bu=="") 
-      if(records.length>0){
+      let records= seats&&seats.filter((seat,i)=>!seat.selected)
+      if(records && records.length>0){
         return records.length
+      }else{
+        return 0
       }
     }   
   }
@@ -630,6 +645,23 @@ const SeatAllocationAdmin = () => {
               </Box>
               <Box sx={{ minWidth: 120 }}>
                 <FormControl sx={{ m: 2, minWidth: "90%" }} size="medium">
+                  <InputLabel id="demo-simple-select-label">Location</InputLabel>
+                  <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                    value={values.campus}
+                    label="Location"
+                    name="campus"
+                    onChange={handleChange}
+                  >
+                    {campuses.map((campus, i) => (
+                      <MenuItem value={campus.name}>{campus.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box sx={{ minWidth: 120 }}>
+                <FormControl sx={{ m: 2, minWidth: "90%" }} size="medium">
                   <InputLabel id="demo-simple-select-label">Floor</InputLabel>
                   <Select
                     labelId="demo-simple-select-label"
@@ -676,6 +708,7 @@ const SeatAllocationAdmin = () => {
                     onChange={handleChange}
                   />
                   {/* <Input id="outlined-basic" variant="outlined"   name='maxSeats' value={values.maxSeats} onChange={handleChange} type="number"/> */}
+                  {errors.maxSeats?<div className="fontFamily" style={{color:"red",paddingTop:"5px", fontSize:"12px"}}>{errors.maxSeats}</div>:""}
                 </FormControl>
               </Box>
               <Box sx={{ marginTop: "10px" }}>
@@ -702,7 +735,7 @@ const SeatAllocationAdmin = () => {
           {/* ) : ( */}
           <Grid item md={9}>
             <Box className="seatAllocationClass">
-              <h2 className="fontFamily">Seat Allocation</h2>
+              <h2 className="fontFamily" style={{textTransform:"capitalize"}}>Layout view {layoutView.country&&layoutView.state && layoutView.city && layoutView.campus && layoutView.floor &&<>( {layoutView.country} &gt; {layoutView.state} &gt; {layoutView.city} &gt; {layoutView.campus} &gt; {layoutView.floor} )</>}</h2> 
               {seats && seats.length > 0
                 ? seats.map((row, rowIndex) => (
                     <>
@@ -718,7 +751,7 @@ const SeatAllocationAdmin = () => {
                       </div>
                     </>
                   ))
-                : "Please select the filters then you can able to select the srats "}
+                : "No seats found "}
               {allocatedSeatsByGlobal &&
                 allocatedSeatsByGlobal.length > 0 &&
                 bus &&
@@ -735,22 +768,23 @@ const SeatAllocationAdmin = () => {
                     >
                       {" "}
                     </div>
-                    <div>{bu.name} (<b>5</b>)</div>
+                    <div>{bu.name} (<b>{getBuCount(bu.id)}</b>)</div>
                   </div>
                 ))}
-                <div className="legendsSeating fontFamily">
+               {seats && seats.length > 0
+                && <div className="legendsSeating fontFamily">
                     <div
                       className="seat"
                       style={{
-                        background: "#d1cdcd",
+                        background: "#fff",
                         height: "15px",
                         width: "15px",
                       }}
                     >
                       {" "}
                     </div>
-                    <div>Unallocated (<b>10</b>)</div>
-                  </div>
+                    <div>Available (<b>{getBuCount("")}</b>)</div>
+                  </div>}
             </Box>
           </Grid>
           

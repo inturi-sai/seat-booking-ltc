@@ -182,6 +182,32 @@ exports.getSeatingCapacityAdminByFilter = async (req, res) => {
   }
 }
 
+exports.getAllocationForAdminMatrix = async (req, res) => {
+  try {
+    const allocatedSeats = await models.getAllocationForAdminMatrix(req);
+    if (allocatedSeats.length === 0) {
+      return res.status(404).json({ message: 'allocatedSeats not found' });
+    }
+    res.status(200).json(allocatedSeats);
+  } catch (err) {
+    console.error('Error fetching allocatedSeats:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+exports.getAllocationForHOEMatrix = async (req, res) => {
+  try {
+    const allocatedSeats = await models.getAllocationForHOEMatrix(req);
+    if (allocatedSeats.length === 0) {
+      return res.status(404).json({ message: 'allocatedSeats not found' });
+    }
+    res.status(200).json(allocatedSeats);
+  } catch (err) {
+    console.error('Error fetching allocatedSeats:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
 exports.getHOEFromTable = async (req, res) => {
   const id = parseInt(req.params.id, 10);
 
@@ -200,14 +226,14 @@ exports.getHOEFromTable = async (req, res) => {
 
 exports.getManagersByHOEIdFromTable = async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const {campus, floor} = req.query;
+  const {country, state, city, campus, floor} = req.query;
 
   try {
-    const result = await models.getManagersByHOEIdFromTable(id, campus, floor);
-    if (result.length === 0) {
-      return res.status(404).json({ message: 'Managers not found' });
-    }
-    res.status(200).json(result);
+    const result = await models.getManagersByHOEIdFromTable(id, country, state, city, campus, floor);
+    // if (result.length === 0) {
+    //   return res.status(404).json({ message: 'Managers not found' });
+    // }
+    res.status(200).json(result.length ? result : []);
     //console.log(hoe);
   } catch (err) {
     console.error('Error fetching Managers:', err);
@@ -227,4 +253,3 @@ exports.updateManagerData = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
-
