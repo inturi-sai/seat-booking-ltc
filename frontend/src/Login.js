@@ -43,24 +43,67 @@ export default function Login() {
     }
   };
 
+  // const handleSubmit = async (event) => {
+  //   event.preventDefault();
+  //   if (!validateEmail(email) || !validatePassword(password)) {
+  //     setError("Please fix the validation errors");
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await axios.post("http://localhost:8080/", {
+  //       email,
+  //       password,
+  //     });
+  //     const { accessToken, role } = response.data;
+
+  //     // Save token and role (e.g., in localStorage or state)
+  //     localStorage.setItem("token", accessToken);
+  //     localStorage.setItem("role", role);
+  //     login(accessToken, role);
+  //     // Redirect based on role
+  //     switch (role) {
+  //       case "admin":
+  //         navigate("/seatAllocationAdmin");
+  //         break;
+  //       case "manager":
+  //         navigate("/manager");
+  //         break;
+  //       case "employee":
+  //         navigate("/employee");
+  //         break;
+  //       case "hoe":
+  //         navigate("/hoe");
+  //         break;
+  //       default:
+  //         navigate("/"); // Fallback redirection
+  //     }
+  //   } catch (error) {
+  //     console.error("Error during Axios request:", error);
+  //     setError("Login failed. Please try again.");
+  //   }
+  // };
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateEmail(email) || !validatePassword(password)) {
       setError("Please fix the validation errors");
       return;
     }
-
+  
     try {
       const response = await axios.post("http://localhost:8080/", {
         email,
         password,
       });
-      const { accessToken, role } = response.data;
-
-      // Save token and role (e.g., in localStorage or state)
-      localStorage.setItem("token", accessToken);
+      const { token, role, firstName, lastName } = response.data;
+  
+      // Save token, role, and user details (e.g., in localStorage or state)
+      localStorage.setItem("token", token);
       localStorage.setItem("role", role);
-      login(accessToken, role);
+      localStorage.setItem("firstName", firstName);
+      localStorage.setItem("lastName", lastName);
+      login(token, role);
+      
       // Redirect based on role
       switch (role) {
         case "admin":
@@ -83,6 +126,7 @@ export default function Login() {
       setError("Login failed. Please try again.");
     }
   };
+  
 
   return (
     <div className="login-container">
@@ -167,3 +211,4 @@ export default function Login() {
     </div>
   );
 }
+

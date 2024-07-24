@@ -199,10 +199,7 @@ const getQueryCapacity=(type,whereClause)=>{
     query = ` SELECT country,state,city,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city`;
 
   }else if(type=="floor"){
-    query = ` SELECT country,state,city,campus,floor,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,campus,floor`;
-
-  }else if(type=="campus"){
-    query = ` SELECT country,state,city,campus,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,campus`;
+    query = ` SELECT country,state,city,floor,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,floor`;
 
   }
   return query;
@@ -247,42 +244,12 @@ const mergeArrays=(array1, array2, key)=> {
 
   return mergedArray;
 }
-const getAllocationForAdminMatrix=async(req)=>{ 
-const { country, state, city, floor,type,campus } = req.query;
-let values = [];
-let whereConditions = [];
-let index = 1;
-if (country) {
-  values.push(country);
-  whereConditions.push(`LOWER(country) = LOWER($${index})`);
-  index++;
-}
-if (state) {
-  values.push(state);
-  whereConditions.push(`LOWER(state) = LOWER($${index})`);
-  index++;
-}
-if (city) {
-  values.push(city);
-  whereConditions.push(`LOWER(city) = LOWER($${index})`);
-  index++;
-}
-if (campus) {
-  values.push(campus);
-  whereConditions.push(`LOWER(campus) = LOWER($${index})`);
-  index++;
-}
-if (floor) {
-  values.push(parseInt(floor, 10));
-  whereConditions.push(`floor = $${index}`);
-  index++;
-}
-const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-const allocatedCount = await getAllocatedCount(values,whereClause,type);
-const totalCapacity = await getCapacity(values,whereClause,type);
-let mergedArray = mergeArrays(totalCapacity, allocatedCount, type);
-return mergedArray;
-}
+
+// models.js
+
+
+
+
 const getHOETotalAllocatedQuery=async()=>{
     const sql = `select bu_id,SUM(total) as total from seat_allocation WHERE bu_id = $1 group by bu_id`;
     return sql;
@@ -356,6 +323,22 @@ const getAllocationForHOEMatrix=async(req)=>{
       }
   }
 
+
+  const getSeatDataByUser = async (firstName, lastName) => {
+    try {
+        const query = `
+            SELECT seat_data, manager_name, floor, bu, campus
+            FROM employee_details
+            WHERE first_name = $1 AND last_name = $2;
+        `;
+        const { rows } = await pool.query(query, [firstName, lastName]);
+        return rows; // Return seat data array
+    } catch (error) {
+        console.error('Error fetching seat data:', error);
+        throw error; // Propagate the error to be handled in the controller
+    }
+};
+
 module.exports = {
   insertUser,
   findUserByEmailAndPassword,
@@ -372,6 +355,6 @@ module.exports = {
   updateManagerData,
   getAllocationForAdminMatrix,
   getAllocationForHOEMatrix,
-  getBUByFloor
+  getBUByFloor,
+  getSeatDataByUser
 };
-
