@@ -597,6 +597,62 @@ const getAllocationForManagerMatrix = async (req) => {
     
 };
 
+const getTransportMetrix = async (req) => {
+  const { country, city, state, floor, campus,bu_id,manager_id } = req.query
+  let values = [];
+  let whereConditions = [];
+  let index = 1;
+  if (country) {
+    values.push(country);
+    whereConditions.push(`LOWER(sa.country) = LOWER($${index})`);
+    index++;
+  }
+  if (state) {
+    values.push(state);
+    whereConditions.push(`LOWER(sa.state) = LOWER($${index})`);
+    index++;
+  }
+  if (city) {
+    values.push(city);
+    whereConditions.push(`LOWER(sa.city) = LOWER($${index})`);
+    index++;
+  }
+  if (campus) {
+    values.push(campus);
+    whereConditions.push(`LOWER(sa.campus) = LOWER($${index})`);
+    index++;
+  }
+  if (floor) {
+    values.push(parseInt(floor, 10));
+    whereConditions.push(`sa.floor = $${index}`);
+    index++;
+  }
+  if (bu_id) {
+    values.push(parseInt(bu_id, 10));
+    whereConditions.push(`sa.bu_id = $${index}`);
+    index++;
+  }
+  if (manager_id) {
+    values.push(parseInt(manager_id, 10));
+    whereConditions.push(`ma.id = $${index}`);
+    index++;
+  }
+  const whereClause =
+    whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
+  const query = `select  u.transport,
+  COUNT(u.id) AS transport_count from users as u INNER JOIN employee_allocation as ea ON(ea.id=u.id) INNER JOIN manager_allocation as ma ON(ma.id=ea.manager_id) 
+	INNER JOIN seat_allocation as sa ON(sa.bu_id=ma.hoe_id) 
+	${whereClause}
+	group by u.transport`;
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error("Error executing query", err);
+    throw err;
+  }
+};
+
 module.exports = {
   insertUser,
   findUserByEmailAndPassword,
@@ -620,5 +676,6 @@ module.exports = {
   getAllocationForBUwise,
   getAllocationForAdminMatrix,
   getManagersByFloor,
-  getAllocationForManagerMatrix
+  getAllocationForManagerMatrix,
+  getTransportMetrix
 };

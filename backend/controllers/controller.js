@@ -208,19 +208,6 @@ exports.getAllocationForHOEMatrix = async (req, res) => {
   }
 }
 
-// exports.getAllocationForManagerMatrix = async (req, res) => {
-//   try {
-//     const allocatedSeats = await models.getAllocationForManagerMatrix(req);
-//     if (allocatedSeats.length === 0) {
-//       return res.status(404).json({ message: 'allocatedSeats not found' });
-//     }
-//     res.status(200).json(allocatedSeats);
-//   } catch (err) {
-//     console.error('Error fetching allocatedSeats:', err);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// }
-
 exports.getBUByFloor = async (req, res) => {
   try {
     const { country, city, state, floor, campus } = req.query
@@ -339,14 +326,13 @@ exports.getManagersByFloor = async (req, res) => {
   try {
     const { country, city, state, floor, campus,bu_id } = req.query
     const values = [country, state, city, parseInt(floor), campus,bu_id]
-    const bus = await models.getManagersByFloor(values);
-    if (bus.length === 0) {
+    const managers = await models.getManagersByFloor(values);
+    if (managers.length === 0) {
       return res.status(404).json({ message: 'Managers not found' });
     }
-    res.status(200).json(bus);
-    console.log(bus);
+    res.status(200).json(managers);
   } catch (err) {
-    console.error('Error fetching BU:', err);
+    console.error('Error fetching Managers:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
@@ -360,6 +346,20 @@ exports.getAllocationForManagerMatrix = async (req, res) => {
     res.status(200).json(allocatedSeats);
   } catch (err) {
     console.error('Error fetching allocatedSeats:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+exports.getTransportMetrix = async (req, res) => {
+  try {
+    const data = await models.getTransportMetrix(req);
+    if (data.length === 0) {
+      return res.status(404).json({ message: 'Data not found' });
+    }
+    res.status(200).json(data);
+    console.log(data);
+  } catch (err) {
+    console.error('Error fetching data:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
