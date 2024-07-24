@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/controller');
+const { Model } = require('sequelize');
 
 // Auth routes
 router.post('/signup', controller.signup);
@@ -20,5 +21,6 @@ router.get('/getSeatingCapacityAdminByFilter',controller.getSeatingCapacityAdmin
 router.get('/getHOEFromTable/:id', controller.getHOEFromTable);
 router.get('/getManagersByHOEIdFromTable/:id', controller.getManagersByHOEIdFromTable);
 router.put('/updateManagerData/:id', controller.updateManagerData);
+router.get('/getSeatData', controller.getSeatData);
 
 module.exports = router;
