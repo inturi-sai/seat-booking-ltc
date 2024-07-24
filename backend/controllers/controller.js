@@ -210,9 +210,7 @@ exports.getAllocationForHOEMatrix = async (req, res) => {
 
 exports.getBUByFloor = async (req, res) => {
   try {
-    const { country, city, state, floor, campus } = req.query
-    const values = [country, state, city, parseInt(floor), campus]
-    const bus = await models.getBUByFloor(values);
+    const bus = await models.getBUByFloor(req);
     if (bus.length === 0) {
       return res.status(404).json({ message: 'BU not found' });
     }
