@@ -23,4 +23,11 @@ router.get('/getManagersByHOEIdFromTable/:id', controller.getManagersByHOEIdFrom
 router.put('/updateManagerData/:id', controller.updateManagerData);
 router.get('/getSeatData', controller.getSeatData);
 
+//Matrix
+
+router.get('/getAllocationForAdminMatrix',controller.getAllocationForAdminMatrix);
+router.get('/getAllocationForHOEMatrix',controller.getAllocationForHOEMatrix);
+// router.get('/getAllocationForManagerMatrix',controller.getAllocationForManagerMatrix);
+router.get('/getBUByFloor',controller.getBUByFloor);
+
 module.exports = router;

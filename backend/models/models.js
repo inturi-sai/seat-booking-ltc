@@ -265,12 +265,19 @@ const getHOETotalAllocatedCount=async(buId)=>{
       throw err;
     }
 }
-const getHOEManagerAllocatedQuery=async(whereClause)=>{
-  const sql = `select hoe_id as bu_id,business_unit, SUM(array_length(seats_array, 1)) AS allocated  from manager_allocation ${whereClause} group by hoe_id,business_unit`;
+const getHOEManagerAllocatedQuery=async(whereClause,type)=>{
+  let sql=''
+  if(type=="manager"){
+    sql = `select hoe_id as bu_id,business_unit,id as manager,first_name,last_name, SUM(array_length(seats_array, 1)) AS allocated  from manager_allocation ${whereClause} group by hoe_id,business_unit,id`;
+  }else{
+    sql = `select hoe_id as bu_id,business_unit, SUM(array_length(seats_array, 1)) AS allocated  from manager_allocation ${whereClause} group by hoe_id,business_unit`;
+
+  }
   return sql;
 }
-const getHOEManagerAllocatedCount=async(whereClause,values)=>{
-const query=await getHOEManagerAllocatedQuery(whereClause); 
+const getHOEManagerAllocatedCount=async(whereClause,values,type)=>{
+const query=await getHOEManagerAllocatedQuery(whereClause,type);
+console.log(query,"query",values) 
    try {
     const { rows } = await pool.query(query,values);
     return rows;
@@ -280,6 +287,41 @@ const query=await getHOEManagerAllocatedQuery(whereClause);
   }
 }
 
+const getAllocationForHOEMatrix=async(req)=>{ 
+  const { manager_id,bu_id,type } = req.query;
+  let values = [bu_id];
+  let index = 1;
+  let whereConditions = [`hoe_id = $${index}`];
+  if (manager_id && type=="manager") {
+    index++;
+    values.push(manager_id);
+    whereConditions.push(`id = $${index}`);
+  }
+  console.log(whereConditions,"whereConditions")
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+  const allocatedCount = await getHOETotalAllocatedCount(bu_id);
+  const managersCount = await getHOEManagerAllocatedCount(whereClause,values,type);
+  if(type=="manager"){
+
+  }else{
+    let mergedArray = mergeArrays(allocatedCount,managersCount, "bu_id");
+    return mergedArray;
+  }
+  }
+
+  const getBUByFloor=async(values)=>{ 
+    const query = `SELECT t1.id as bu_id, t1.name, t1.manager, t2.country, t2.state, t2.city, t2.campus, t2.floor
+            FROM business_unit AS t1
+            INNER JOIN seat_allocation AS t2
+            ON t1.id = t2.bu_id where LOWER(t2.country)=LOWER($1) and LOWER(t2.state)=LOWER($2) and LOWER(t2.city)=LOWER($3) and t2.floor=$4 and LOWER(t2.campus)=LOWER($5)`;
+       try {
+        const { rows } = await pool.query(query, values);
+        return rows;
+      } catch (err) {
+        console.error('Error executing query', err);
+        throw err;
+      }
+  }
 
 
   const getSeatDataByUser = async (firstName, lastName) => {
@@ -311,5 +353,8 @@ module.exports = {
   getHOEFromTable, 
   getManagersByHOEIdFromTable, 
   updateManagerData,
+  getAllocationForAdminMatrix,
+  getAllocationForHOEMatrix,
+  getBUByFloor,
   getSeatDataByUser
 };
