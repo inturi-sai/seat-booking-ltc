@@ -427,6 +427,25 @@ const updateEmployeeSeatData = async (id, seatData) => {
   }
 };
 
+const getBuQuery=(type,whereClause)=>{
+    let sql=''
+    if(type=="bu"){
+      sql=`select sa.bu_id,bu.name as bu_name,sa.country,sa.state,sa.city,sa.campus,sa.floor,SUM(array_length(sa.seats, 1)) as total,SUM(array_length(ma.seats_array, 1)) as allocated from seat_allocation as sa INNER JOIN manager_allocation as ma ON(sa.bu_id=ma.hoe_id) INNER JOIN business_unit as bu ON(bu.id=ma.hoe_id) ${whereClause}
+        group by sa.bu_id,sa.country,sa.state,sa.city,sa.campus,sa.floor,bu.id`
+    }
+    return sql;
+    }
+    const getAllocatedBuByFloorCount=async(values,whereClause,type)=>{ 
+      const query=getBuQuery(type,whereClause) 
+         try {
+          const { rows } = await pool.query(query,values); 
+          return rows;
+        } catch (err) {
+          console.error('Error executing query', err);
+          throw err;
+        }
+    }
+
 const getAllocationForBUwise=async(req)=>{ 
   const { country, state, city, floor,type,campus,bu} = req.query;
   let values = [];
