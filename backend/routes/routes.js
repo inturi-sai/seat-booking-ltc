@@ -21,6 +21,11 @@ router.get('/getHOEFromTable/:id', controller.getHOEFromTable);
 router.get('/getManagersByHOEIdFromTable/:id', controller.getManagersByHOEIdFromTable);
 router.put('/updateManagerData/:id', controller.updateManagerData);
 
+// Manager page routes
+router.get('/getManagerFromTable/:id', controller.getManagerFromTable);
+router.get('/getEmployeesByManagerIdFromTable/:id', controller.getEmployeesByManagerIdFromTable);
+router.put('/updateEmployeeSeatData/:id', controller.updateEmployeeSeatData);
+
 //Matrix
 
 router.get('/getAllocationForAdminMatrix',controller.getAllocationForAdminMatrix);

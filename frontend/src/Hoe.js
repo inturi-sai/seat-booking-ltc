@@ -1,5 +1,3 @@
-//changed ranges in giving renderSeats function
-
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import {
@@ -40,7 +38,7 @@ const Hoe = () => {
 
 
   useEffect(() => {
-    getHOEDetails(1);  // Aslo change id in line 73 && 137
+    getHOEDetails(1);  // Aslo change id in line 123 && 140
   }, []);
 
   /*-------- getHOEDetails function get HOE and Managers details from database --------*/
@@ -69,13 +67,14 @@ const Hoe = () => {
   };
 
   const getManagerDetails = useCallback(async (id) => {
-    // console.log("campus", selectedCampus);
-    // console.log("floor", selectedFloor);
     try {
       const response2 = await axios.get(`http://localhost:8080/getManagersByHOEIdFromTable/${id}`, {
         params: {
           campus: selectedCampus,
-          floor: selectedFloor
+          floor: selectedFloor,
+          country: selectedCountry,
+          state: selectedState,
+          city: selectedCity
         }
       });
 
@@ -84,11 +83,21 @@ const Hoe = () => {
       // console.log("Selected Manager:", response2.data[0]);
 
       setManagers(response2.data.map(item => ({ ...item, name: item.first_name + " " + item.last_name })));
-      if (selectedManager === '') setSelectedManager({ ...response2.data[0], name: response2.data[0].first_name + " " + response2.data[0].last_name });
-      else {
-        const managerDetails = response2.data.filter(item => item.id === selectedManager.id);
-        if (managerDetails.length === 0) setSelectedManager({ ...response2.data[0], name: response2.data[0].first_name + " " + response2.data[0].last_name });
-        else setSelectedManager({ ...managerDetails[0], name: managerDetails[0].first_name + " " + managerDetails[0].last_name });
+
+      if (response2.data.length > 0) {
+        if (selectedManager === '') {
+          setSelectedManager({ ...response2.data[0], name: response2.data[0].first_name + " " + response2.data[0].last_name });
+        } else {
+          const managerDetails = response2.data.filter(item => item.id === selectedManager.id);
+          if (managerDetails.length === 0) {
+            setSelectedManager({ ...response2.data[0], name: response2.data[0].first_name + " " + response2.data[0].last_name });
+          } else {
+            setSelectedManager({ ...managerDetails[0], name: managerDetails[0].first_name + " " + managerDetails[0].last_name });
+          }
+        }
+      } else {
+        setManagers([]);
+        setSelectedManager('');
       }
 
     } catch (err) {
@@ -98,14 +107,12 @@ const Hoe = () => {
 
   useEffect(() => {
     if (selectedFloor !== "") {
-      getManagerDetails(1);  // Aslo change id in line 43 && 137
+      getManagerDetails(1);  // Aslo change id in line 43 && 140
     }
-  }, [selectedFloor, getManagerDetails]);
+  }, [selectedFloor]);
 
   /*-------- handleManagerChange function is to change selectedManager --------*/
   const handleManagerChange = (event) => {
-    // console.log("event", event.target.value);
-    // console.log(managers);
     const filteredList = managers.filter(manager => manager.id === event.target.value);
     setSelectedManager(filteredList[0]);
     setIsSeatsChanging(false);
@@ -124,9 +131,6 @@ const Hoe = () => {
   /*-------- onClickingUpdateSeats function is to update respective selectedManager seats in database --------*/
   const onClickingUpdateSeats = async () => {
     selectedSeats.sort((a, b) => a - b);
-    //console.log(selectedSeats);
-    //console.log(typeof (selectedSeats));
-    //console.log(selectedManager.id);
     if (selectedManager && selectedSeats.length > 0) {
       try {
         await axios.put(`http://localhost:8080/updateManagerData/${selectedManager.id}`, {
@@ -134,7 +138,7 @@ const Hoe = () => {
         });
         setSelectedSeats([]);
         setIsSeatsChanging(false);
-        getManagerDetails(1); // Refresh data  // Aslo change id in line 43 && 73
+        getManagerDetails(1); // Refresh data  // Aslo change id in line 43 && 104
         setOpenSnackbar(true); // Show Snackbar
       } catch (err) {
         console.error(err);
@@ -151,6 +155,7 @@ const Hoe = () => {
     for (let i = 1; i <= HOE.total; i++) {
       seats.push(
         <Seat
+          floor={HOE.floor}
           totalHoeSeats={HOE.seats}
           managerDetails={selectedManager}
           managersList={managers}
@@ -278,6 +283,8 @@ const Hoe = () => {
                 setHoe(HoeList.filter(item => item.campus === selectedCampus && item.floor === e.target.value)[0]);
                 setIsSeatsChanging(false);
                 setSelectedSeats([]);
+                setManagers([]);
+                setSelectedManager("");
               }}
             >
               {floors.map((floor, index) => (
@@ -289,7 +296,7 @@ const Hoe = () => {
           </FormControl>
         </Box>
       </Box>
-      {managers.length > 0 && <TableContainer component={Paper} sx={{ marginTop: '20px', marginBottom: '40px', width: "80%" }}>
+      {HoeList.length > 0 && <TableContainer component={Paper} sx={{ marginTop: '20px', marginBottom: '40px', width: "80%" }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -348,7 +355,7 @@ const Hoe = () => {
       </Box>
 
       <Grid container spacing={2} style={{ margin: '20px 20px', width: "90%", display: "flex", justifyContent: "center", height: "400px", overflowY: "auto" }}>
-        {selectedManager.length !== 0 && managers.length !== 0 && renderSeats()}
+        {HoeList.length > 0 && renderSeats()}
       </Grid>
 
       <Grid container spacing={5} justifyContent="center" marginBottom={5}>
@@ -382,7 +389,7 @@ const Hoe = () => {
       </Grid>
 
       {/*<Button variant="contained" color="primary" onClick={allocateSeats}>Allocate Seats</Button> */}
-      {!isSeatsChanging &&
+      {!isSeatsChanging && managers.length > 0 &&
         <Button variant="contained" color="primary" onClick={onClickingChangeSeats}>Change Seats for {selectedManager.name}</Button>}
       {isSeatsChanging && <Paper elevation={0} style={{ padding: '20px', marginTop: '20px' }}>
         <TextField

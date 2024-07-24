@@ -149,52 +149,6 @@ exports.getSeatingCapacityAdminByFilter = async (req, res) => {
   }
 }
 
-exports.getHOEFromTable = async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-
-  try {
-    const result = await models.getHOEFromTable(id);
-    if (result.length === 0) {
-      return res.status(404).json({ message: 'HOE not found' });
-    }
-    res.status(200).json(result);
-    //console.log(hoe);
-  } catch (err) {
-    console.error('Error fetching HOE:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
-exports.getManagersByHOEIdFromTable = async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const {campus, floor} = req.query;
-
-  try {
-    const result = await models.getManagersByHOEIdFromTable(id, campus, floor);
-    if (result.length === 0) {
-      return res.status(404).json({ message: 'Managers not found' });
-    }
-    res.status(200).json(result);
-    //console.log(hoe);
-  } catch (err) {
-    console.error('Error fetching Managers:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
-exports.updateManagerData = async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const { seats } = req.body;
-
-  try {
-    const result = await models.updateManagerData(id, seats);
-    res.status(200).json({ message: 'Manager data updated successfully', result });
-  } catch (err) {
-    console.error('Error updating manager data:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
 exports.getAllocationForAdminMatrix = async (req, res) => {
   try {
     const allocatedSeats = await models.getAllocationForAdminMatrix(req);
@@ -220,3 +174,88 @@ exports.getAllocationForHOEMatrix = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+exports.getHOEFromTable = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  try {
+    const result = await models.getHOEFromTable(id);
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'HOE not found' });
+    }
+    res.status(200).json(result);
+    //console.log(hoe);
+  } catch (err) {
+    console.error('Error fetching HOE:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+exports.getManagersByHOEIdFromTable = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const {country, state, city, campus, floor} = req.query;
+
+  try {
+    const result = await models.getManagersByHOEIdFromTable(id, country, state, city, campus, floor);
+    // if (result.length === 0) {
+    //   return res.status(404).json({ message: 'Managers not found' });
+    // }
+    res.status(200).json(result.length ? result : []);
+    //console.log(hoe);
+  } catch (err) {
+    console.error('Error fetching Managers:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+exports.updateManagerData = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const { seats } = req.body;
+
+  try {
+    const result = await models.updateManagerData(id, seats);
+    res.status(200).json({ message: 'Manager data updated successfully', result });
+  } catch (err) {
+    console.error('Error updating manager data:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+exports.getManagerFromTable = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+      const result = await models.getManagerFromTable(id);
+      if (result.length === 0) {
+        return res.status(404).json({ message: 'Manager not found' });
+      }
+      res.status(200).json(result);
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+exports.getEmployeesByManagerIdFromTable = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+      const result = await models.getEmployeesByManagerIdFromTable(id);
+      //res.status(200).json({ message: 'Employee data fetched successfully', result });
+      res.status(200).json(result.length ? result : []);
+
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+exports.updateEmployeeSeatData = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const { seats } = req.body;
+  try {
+      await models.updateEmployeeSeatData(id, seats);
+      res.json({ message: 'Seat data updated successfully' });
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+};

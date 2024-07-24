@@ -131,50 +131,6 @@ const getSeatingCapacityAdminByFilter=async(values)=>{
     }
 }
 
-const getHOEFromTable = async (id) => {
-  const sql = `SELECT t1.id, t1.name, t1.manager, t1.role, t2.country, t2.state, t2.city, t2.campus, t2.floor, t2.total, t2.seats
-            FROM business_unit AS t1
-            INNER JOIN seat_allocation AS t2
-            ON t1.id = t2.bu_id
-            WHERE t1.id = $1`;
-  const values = [id];
-
-  try {
-    const { rows } = await pool.query(sql, values);
-    //console.log(rows);
-    return rows;
-  } catch (err) {
-    console.error('Error executing query', err);
-    throw err;
-  }
-};
-
-const getManagersByHOEIdFromTable = async (id, campus, floor) => {
-  const sql = 'SELECT * FROM manager_allocation WHERE hoe_id = $1 AND campus = $2 AND floor = $3 ORDER BY seats_array[1]';
-  const values = [id, campus, floor];
-
-  try {
-    const { rows } = await pool.query(sql, values);
-    //console.log(rows);
-    return rows;
-  } catch (err) {
-    console.error('Error executing query', err);
-    throw err;
-  }
-};
-
-const updateManagerData = async (id, seats) => {
-  const sql = 'UPDATE manager_allocation SET seats_array = $1 WHERE id = $2';
-  const values = [seats, id];
-
-  try {
-    const result = await pool.query(sql, values);
-    return result;
-  } catch (err) {
-    console.error('Error executing query', err);
-    throw err;
-  }
-};
 const getQuery=(type,whereClause)=>{
  let query=""
   if(type=="country"){
@@ -330,6 +286,101 @@ const getAllocationForHOEMatrix=async(req)=>{
   return mergedArray;
   }
 
+  const getHOEFromTable = async (id) => {
+    const sql = `SELECT t1.id, t1.name, t1.manager, t1.role, t2.country, t2.state, t2.city, t2.campus, t2.floor, t2.total, t2.seats
+              FROM business_unit AS t1
+              INNER JOIN seat_allocation AS t2
+              ON t1.id = t2.bu_id
+              WHERE t1.id = $1`;
+    const values = [id];
+  
+    try {
+      const { rows } = await pool.query(sql, values);
+      //console.log(rows);
+      return rows;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+  };
+  
+  const getManagersByHOEIdFromTable = async (id, country, state, city, campus, floor) => {
+    const sql = 'SELECT * FROM manager_allocation WHERE hoe_id = $1 AND country = $2 AND state = $3 AND city = $4 AND campus = $5 AND floor = $6 ORDER BY seats_array[1]';
+    const values = [id, country, state, city, campus, floor];
+  
+    try {
+      const { rows } = await pool.query(sql, values);
+      //console.log(rows);
+      return rows;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+  };
+  
+  const updateManagerData = async (id, seats) => {
+    const sql = 'UPDATE manager_allocation SET seats_array = $1 WHERE id = $2';
+    const values = [seats, id];
+  
+    try {
+      const result = await pool.query(sql, values);
+      return result;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+  };
+  
+  const getManagerFromTable = async (id) => {
+    const sql = `SELECT t1.first_name, t1.last_name, t1.business_unit, t1.campus, t1.floor, t1.seats_array, t1.hoe_id,
+                 t2.country, t2.state, t2.city, t2.total
+                 FROM  manager_allocation  AS t1
+                 INNER JOIN seat_allocation as t2
+                 on t1.hoe_id = t2.bu_id AND t1.campus = t2.campus AND t1.floor = t2.floor
+                 WHERE t1.id =$1`;
+    const values = [id];
+  
+    try {
+      const { rows } = await pool.query(sql, values);
+      //console.log("this is from getEmployess",rows);
+      return rows;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+  };
+  
+  const getEmployeesByManagerIdFromTable = async (id) => {
+    const sql = 'SELECT * FROM  employee_allocation  WHERE manager_id =$1 ORDER BY id';
+    const values = [id];
+  
+    try {
+      const { rows } = await pool.query(sql, values);
+      //console.log("getEmployess",rows);
+      return rows;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+  };
+  
+  
+  const updateEmployeeSeatData = async (id, seatData) => {
+    const sql = 'UPDATE employee_allocation SET seat_data = $1 WHERE id = $2'
+    const values = [JSON.stringify(seatData), id];
+    // console.log("seatData", seatData);
+    // console.log("id", id);
+  
+    try {
+      const result = await pool.query(sql, values);
+      return result;
+     
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+  };
+
 module.exports = {
   insertUser,
   findUserByEmailAndPassword,
@@ -341,10 +392,13 @@ module.exports = {
   updateSeatingCapacityAdmin,
   createSeatingCapacityAdmin,
   getSeatingCapacityAdmin,
+  getAllocationForAdminMatrix,
+  getAllocationForHOEMatrix,
   getHOEFromTable, 
   getManagersByHOEIdFromTable, 
   updateManagerData,
-  getAllocationForAdminMatrix,
-  getAllocationForHOEMatrix
+  getManagerFromTable,
+  getEmployeesByManagerIdFromTable,
+  updateEmployeeSeatData
 };
 
