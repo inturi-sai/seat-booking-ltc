@@ -350,3 +350,16 @@ exports.getManagersByFloor = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+exports.getAllocationForManagerMatrix = async (req, res) => {
+  try {
+    const allocatedSeats = await models.getAllocationForManagerMatrix(req);
+    if (allocatedSeats.length === 0) {
+      return res.status(404).json({ message: 'allocatedSeats not found' });
+    }
+    res.status(200).json(allocatedSeats);
+  } catch (err) {
+    console.error('Error fetching allocatedSeats:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
