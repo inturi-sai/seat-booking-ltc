@@ -38,7 +38,7 @@ const Hoe = () => {
 
 
   useEffect(() => {
-    getHOEDetails(1);  // Aslo change id in line 123 && 140
+    getHOEDetails(1);  // Aslo change id in line 110 && 141
   }, []);
 
   /*-------- getHOEDetails function get HOE and Managers details from database --------*/
@@ -107,7 +107,7 @@ const Hoe = () => {
 
   useEffect(() => {
     if (selectedFloor !== "") {
-      getManagerDetails(1);  // Aslo change id in line 43 && 140
+      getManagerDetails(1);  // Aslo change id in line 41 && 141
     }
   }, [selectedFloor]);
 
@@ -138,7 +138,7 @@ const Hoe = () => {
         });
         setSelectedSeats([]);
         setIsSeatsChanging(false);
-        getManagerDetails(1); // Refresh data  // Aslo change id in line 43 && 104
+        getManagerDetails(1); // Refresh data  // Aslo change id in line 41 && 110
         setOpenSnackbar(true); // Show Snackbar
       } catch (err) {
         console.error(err);
@@ -354,7 +354,7 @@ const Hoe = () => {
         </Box>
       </Box>
 
-      <Grid container spacing={2} style={{ margin: '20px 20px', width: "90%", display: "flex", justifyContent: "center", height: "400px", overflowY: "auto" }}>
+      <Grid container spacing={2} style={{ margin: '20px 20px', width: "90%", display: "flex", justifyContent: "center", maxHeight: "400px", overflowY: "auto" }}>
         {HoeList.length > 0 && renderSeats()}
       </Grid>
 

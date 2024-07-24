@@ -4,6 +4,7 @@ import "./App.css";
 import  Employee  from "./Employee";
 import Header from "./Header";
 import Hoe from "./Hoe";
+import Manager from './Manager';
 import Login from "./Login";
 import Signup from "./Signup";
 // import AuthProvider from "./AuthProvider";
@@ -23,6 +24,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/admin" element={<Admin />} />
             <Route path="/hoe" element={<Hoe />} />
+            <Route path="/manager" element={<Manager />} />
             <Route path="/employee" element={<Employee />} />
             <Route path="/seatAllocation" element={<SeatAllocation />}></Route>
             <Route
