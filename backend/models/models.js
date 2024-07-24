@@ -139,8 +139,10 @@ const getQuery = (type, whereClause) => {
     query = ` SELECT country,state,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state`
   } else if (type == "city") {
     query = ` SELECT country,state,city,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city`;
+  }else if (type == "campus") {
+    query = ` SELECT country,state,city,campus,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city,campus`;
   } else if (type == "floor") {
-    query = ` SELECT country,state,city,floor,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city,floor`;
+    query = ` SELECT country,state,city,campus,floor,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city,campus,floor`;
   }
   return query;
 }
@@ -154,8 +156,11 @@ const getQueryCapacity = (type, whereClause) => {
   } else if (type == "city") {
     query = ` SELECT country,state,city,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city`;
 
+  }else if (type == "campus") {
+    query = ` SELECT country,state,city,campus,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,campus`;
+
   } else if (type == "floor") {
-    query = ` SELECT country,state,city,floor,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,floor`;
+    query = ` SELECT country,state,city,campus,floor,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,campus,floor`;
 
   }
   return query;
@@ -232,7 +237,6 @@ const getAllocationForAdminMatrix=async(req)=>{
       index++;
     } 
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-    
       const allocatedCount = await getAllocatedCount(values,whereClause,type);
       const totalCapacity = await getCapacity(values,whereClause,type);
       let mergedArray = mergeArrays(totalCapacity, allocatedCount, type);
@@ -297,11 +301,47 @@ const getAllocationForHOEMatrix = async (req) => {
     return mergedArray;
 }
 
-const getBUByFloor = async (values) => {
-  const query = `SELECT t1.id as bu_id, t1.name, t1.manager, t2.country, t2.state, t2.city, t2.campus, t2.floor
+const getBUByFloor = async (req) => {
+  const { country, state, city, floor, campus, bu } = req.query;
+  let values = [];
+  let whereConditions = [];
+  let index = 1;
+  if (country) {
+    values.push(country);
+    whereConditions.push(`LOWER(t2.country) = LOWER($${index})`);
+    index++;
+  }
+  if (state) {
+    values.push(state);
+    whereConditions.push(`LOWER(t2.state) = LOWER($${index})`);
+    index++;
+  }
+  if (city) {
+    values.push(city);
+    whereConditions.push(`LOWER(t2.city) = LOWER($${index})`);
+    index++;
+  }
+  if (campus) {
+    values.push(campus);
+    whereConditions.push(`LOWER(t2.campus) = LOWER($${index})`);
+    index++;
+  }
+  if (floor) {
+    values.push(parseInt(floor, 10));
+    whereConditions.push(`t2.floor = $${index}`);
+    index++;
+  }
+  if (bu) {
+    values.push(parseInt(floor, 10));
+    whereConditions.push(`t2.bu_id = $${index}`);
+    index++;
+  }
+  const whereClause =
+    whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
+  const query = `SELECT t1.id as bu_id, t1.name, t1.manager
             FROM business_unit AS t1
             INNER JOIN seat_allocation AS t2
-            ON t1.id = t2.bu_id where LOWER(t2.country)=LOWER($1) and LOWER(t2.state)=LOWER($2) and LOWER(t2.city)=LOWER($3) and t2.floor=$4 and LOWER(t2.campus)=LOWER($5)`;
+            ON t1.id = t2.bu_id ${whereClause} group by t1.id`;
   try {
     const { rows } = await pool.query(query, values);
     return rows;
@@ -439,7 +479,7 @@ const getAllocatedBuByFloorCount = async (values, whereClause) => {
 };
 
 const getAllocationForBUwise = async (req) => {
-  const { country, state, city, floor, type, campus, bu } = req.query;
+  const { country, state, city, floor, type, campus, bu_id } = req.query;
   let values = [];
   let whereConditions = [];
   let index = 1;
@@ -468,8 +508,8 @@ const getAllocationForBUwise = async (req) => {
     whereConditions.push(`sa.floor = $${index}`);
     index++;
   }
-  if (bu) {
-    values.push(parseInt(floor, 10));
+  if (bu_id) {
+    values.push(parseInt(bu_id, 10));
     whereConditions.push(`sa.bu_id = $${index}`);
     index++;
   }
@@ -524,9 +564,8 @@ const getAllocationByManagerCount = async (values, whereClause) => {
 const formatDataByDayWise=async(data)=>{
 const days = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 
-const result = days.map(day => ({
-  [day]: {
-    value: data[day],
+const result = days.map(day => ( {
+    [day]: data[day],
     id: data.id,
     hoe_id: data.hoe_id,
     total: data.total,
@@ -536,8 +575,8 @@ const result = days.map(day => ({
     campus: data.campus,
     floor: data.floor,
     bu_id: data.bu_id,
-    unallocated:data.total-data[day]
-  }
+    unallocated:data.total-data[day],
+    allocated:data[day]
 }));
 
 return result
@@ -597,6 +636,62 @@ const getAllocationForManagerMatrix = async (req) => {
     
 };
 
+const getTransportMetrix = async (req) => {
+  const { country, city, state, floor, campus,bu_id,manager_id } = req.query
+  let values = [];
+  let whereConditions = [];
+  let index = 1;
+  if (country) {
+    values.push(country);
+    whereConditions.push(`LOWER(sa.country) = LOWER($${index})`);
+    index++;
+  }
+  if (state) {
+    values.push(state);
+    whereConditions.push(`LOWER(sa.state) = LOWER($${index})`);
+    index++;
+  }
+  if (city) {
+    values.push(city);
+    whereConditions.push(`LOWER(sa.city) = LOWER($${index})`);
+    index++;
+  }
+  if (campus) {
+    values.push(campus);
+    whereConditions.push(`LOWER(sa.campus) = LOWER($${index})`);
+    index++;
+  }
+  if (floor) {
+    values.push(parseInt(floor, 10));
+    whereConditions.push(`sa.floor = $${index}`);
+    index++;
+  }
+  if (bu_id) {
+    values.push(parseInt(bu_id, 10));
+    whereConditions.push(`sa.bu_id = $${index}`);
+    index++;
+  }
+  if (manager_id) {
+    values.push(parseInt(manager_id, 10));
+    whereConditions.push(`ma.id = $${index}`);
+    index++;
+  }
+  const whereClause =
+    whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
+  const query = `select  u.transport,
+  COUNT(u.id) AS transport_count from users as u INNER JOIN employee_allocation as ea ON(ea.id=u.id) INNER JOIN manager_allocation as ma ON(ma.id=ea.manager_id) 
+	INNER JOIN seat_allocation as sa ON(sa.bu_id=ma.hoe_id) 
+	${whereClause}
+	group by u.transport`;
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error("Error executing query", err);
+    throw err;
+  }
+};
+
 module.exports = {
   insertUser,
   findUserByEmailAndPassword,
@@ -620,5 +715,6 @@ module.exports = {
   getAllocationForBUwise,
   getAllocationForAdminMatrix,
   getManagersByFloor,
-  getAllocationForManagerMatrix
+  getAllocationForManagerMatrix,
+  getTransportMetrix
 };

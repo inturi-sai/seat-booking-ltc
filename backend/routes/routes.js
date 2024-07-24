@@ -36,5 +36,6 @@ router.get('/getAllocationForManagerMatrix',controller.getAllocationForManagerMa
 router.get('/getBUByFloor',controller.getBUByFloor);
 router.get('/getAllocationForBUwise',controller.getAllocationForBUwise);
 router.get('/getManagersByFloor',controller.getManagersByFloor);
+router.get('/getTransportMetrix',controller.getTransportMetrix);
 
 module.exports = router;
