@@ -178,13 +178,13 @@ const updateManagerData = async (id, seats) => {
 const getQuery=(type,whereClause)=>{
  let query=""
   if(type=="country"){
-   query = ` SELECT country,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country`
+   query = ` SELECT country, SUM(array_length(seats, 1)) as allocated FROM seat_allocation ${whereClause}  GROUP BY country`
   }else if(type=="state"){
-   query = ` SELECT country,state,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state`
+   query = ` SELECT country,state,SUM(array_length(seats, 1)) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state`
   }else if(type=="city"){
-     query = ` SELECT country,state,city,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city`;
+     query = ` SELECT country,state,city,SUM(array_length(seats, 1)) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city`;
   }else if(type=="floor"){
-     query = ` SELECT country,state,city,floor,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city,floor`;
+     query = ` SELECT country,state,city,floor,SUM(array_length(seats, 1)) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city,floor`;
   }
   return query;
 }
@@ -198,6 +198,9 @@ const getQueryCapacity=(type,whereClause)=>{
   }else if(type=="city"){
     query = ` SELECT country,state,city,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city`;
 
+  }else if(type=="campus"){
+    query = ` SELECT country,state,city,campus,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,campus`;
+
   }else if(type=="floor"){
     query = ` SELECT country,state,city,floor,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,floor`;
 
@@ -208,7 +211,6 @@ const getAllocatedCount=async(values,whereClause,type)=>{
   const query=getQuery(type,whereClause)
      try {
       const { rows } = await pool.query(query,values);
-      console.log(rows)
       return rows;
     } catch (err) {
       console.error('Error executing query', err);
@@ -236,17 +238,74 @@ const mergeArrays=(array1, array2, key)=> {
   });
   // Merge array2 into merged object
   array2.forEach(item => {
-    let obj={...item,unallocated:merged[item[key]].total-item.allocated} 
+    if(merged[item[key]] && merged[item[key]].total){
+      let obj={...item,unallocated:merged[item[key]].total-item.allocated} 
       merged[item[key]] = { ...merged[item[key]], ...obj };
+    }else{
+      merged[item[key]] = { ...merged[item[key]], ...item };
+    }
   });
   // Convert merged object back to array
   let mergedArray = Object.values(merged);
 
   return mergedArray;
 }
-
+const getBuQuery=(type,whereClause)=>{
+let sql=''
+if(type=="bu"){
+  sql=`select sa.bu_id,bu.name as bu_name,sa.country,sa.state,sa.city,sa.campus,sa.floor,SUM(array_length(sa.seats, 1)) as total,SUM(array_length(ma.seats_array, 1)) as allocated from seat_allocation as sa INNER JOIN manager_allocation as ma ON(sa.bu_id=ma.hoe_id) INNER JOIN business_unit as bu ON(bu.id=ma.hoe_id) ${whereClause}
+	group by sa.bu_id,sa.country,sa.state,sa.city,sa.campus,sa.floor,bu.id`
+}
+return sql;
+}
+const getAllocatedBuByFloorCount=async(values,whereClause,type)=>{ 
+  const query=getBuQuery(type,whereClause) 
+     try {
+      const { rows } = await pool.query(query,values); 
+      return rows;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+}
 // models.js
-
+const getAllocationForAdminMatrix=async(req)=>{ 
+  const { country, state, city, floor,type,campus} = req.query;
+  let values = [];
+  let whereConditions = [];
+  let index = 1;
+  if (country) {
+    values.push(country);
+    whereConditions.push(`LOWER(country) = LOWER($${index})`);
+    index++;
+  }
+  if (state) {
+    values.push(state);
+    whereConditions.push(`LOWER(state) = LOWER($${index})`);
+    index++;
+  }
+  if (city) {
+    values.push(city);
+    whereConditions.push(`LOWER(city) = LOWER($${index})`);
+    index++;
+  }
+  if (campus) {
+    values.push(campus);
+    whereConditions.push(`LOWER(campus) = LOWER($${index})`);
+    index++;
+  }
+  if (floor) {
+    values.push(parseInt(floor, 10));
+    whereConditions.push(`floor = $${index}`);
+    index++;
+  } 
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+  
+    const allocatedCount = await getAllocatedCount(values,whereClause,type);
+    const totalCapacity = await getCapacity(values,whereClause,type);
+    let mergedArray = mergeArrays(totalCapacity, allocatedCount, type);
+    return mergedArray;  
+  }
 
 
 
@@ -339,6 +398,50 @@ const getAllocationForHOEMatrix=async(req)=>{
     }
 };
 
+const getAllocationForBUwise=async(req)=>{ 
+  const { country, state, city, floor,type,campus,bu} = req.query;
+  let values = [];
+  let whereConditions = [];
+  let index = 1;
+  if (country) {
+    values.push(country);
+    whereConditions.push(`LOWER(sa.country) = LOWER($${index})`);
+    index++;
+  }
+  if (state) {
+    values.push(state);
+    whereConditions.push(`LOWER(sa.state) = LOWER($${index})`);
+    index++;
+  }
+  if (city) {
+    values.push(city);
+    whereConditions.push(`LOWER(sa.city) = LOWER($${index})`);
+    index++;
+  }
+  if (campus) {
+    values.push(campus);
+    whereConditions.push(`LOWER(sa.campus) = LOWER($${index})`);
+    index++;
+  }
+  if (floor) {
+    values.push(parseInt(floor, 10));
+    whereConditions.push(`sa.floor = $${index}`);
+    index++;
+  } 
+  if (bu) {
+    values.push(parseInt(floor, 10));
+    whereConditions.push(`sa.bu_id = $${index}`);
+    index++;
+  } 
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+  if(type=="bu"){
+    const allocatedCount = await getAllocatedBuByFloorCount(values,whereClause,type); 
+    return allocatedCount;
+  }else{
+     return []
+  }  
+  }
+
 module.exports = {
   insertUser,
   findUserByEmailAndPassword,
@@ -356,5 +459,6 @@ module.exports = {
   getAllocationForAdminMatrix,
   getAllocationForHOEMatrix,
   getBUByFloor,
-  getSeatDataByUser
+  getSeatDataByUser,
+  getAllocationForBUwise
 };
