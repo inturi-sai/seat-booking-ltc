@@ -25,4 +25,7 @@ router.put('/updateManagerData/:id', controller.updateManagerData);
 
 router.get('/getAllocationForAdminMatrix',controller.getAllocationForAdminMatrix);
 router.get('/getAllocationForHOEMatrix',controller.getAllocationForHOEMatrix);
+// router.get('/getAllocationForManagerMatrix',controller.getAllocationForManagerMatrix);
+router.get('/getBUByFloor',controller.getBUByFloor);
+
 module.exports = router;

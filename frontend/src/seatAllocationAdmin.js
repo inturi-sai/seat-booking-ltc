@@ -126,6 +126,10 @@ const SeatAllocationAdmin = () => {
             setFloors([{name:res.data[0].floor}])
           },1000)
           handleCountries(res.data); 
+          handleStates(res.data,res.data[0].country); 
+          handleCities(res.data,res.data[0].state,"default"); 
+          handleCampus(res.data,res.data[0].city,"default"); 
+          handleFloor(res.data,res.data[0].campus,"default");
         }
       })
       .catch((err) => {
@@ -155,15 +159,15 @@ const SeatAllocationAdmin = () => {
     }
     setStates(stateList);
   };
-  const handleCities = (data, state) => {
+  const handleCities = (data, state,type) => {
     let cityList = [];
-
+    let country=(!type && values.country)?values.country:(data.length>0?data[0].country:"")
     for (let i = 0; i < data.length; i++) {
       let findItem = cityList.findIndex((coun) => data[i].city == coun.name);
 
       if (
         findItem == -1 &&
-        data[i].country == values.country &&
+        data[i].country == country &&
         data[i].state == state
       ) {
         cityList.push({ name: data[i].city });
@@ -172,16 +176,18 @@ const SeatAllocationAdmin = () => {
 
     setCities(cityList);
   };
-  const handleCampus = (data, city) => {
+  const handleCampus = (data, city,type) => {
     let campusList = [];
+    let country=(!type && values.country)?values.country:(data.length>0?data[0].country:"")
+    let state=(!type && values.state)?values.state:(data.length>0?data[0].state:"")
 
     for (let i = 0; i < data.length; i++) {
       let findItem = campusList.findIndex((coun) => data[i].campus == coun.name);
 
       if (
         findItem == -1 &&
-        data[i].country == values.country &&
-        data[i].state == values.state && 
+        data[i].country == country &&
+        data[i].state == state && 
         data[i].city == city
       ) {
         campusList.push({ name: data[i].campus });
@@ -190,17 +196,20 @@ const SeatAllocationAdmin = () => {
 
     setCampuses(campusList);
   };
-  const handleFloor = (data, campus) => {
+  const handleFloor = (data, campus,type) => {
     let floorList = [];
+    let country=(!type && values.country)?values.country:(data.length>0?data[0].country:"")
+    let state=(!type && values.state)?values.state:(data.length>0?data[0].state:"")
+    let city=(!type && values.city)?values.city:(data.length>0?data[0].city:"")
 
     for (let i = 0; i < data.length; i++) {
       let findItem = floorList.findIndex((coun) => data[i].floor == coun.name);
 
       if (
         findItem == -1 &&
-        data[i].country == values.country &&
-        data[i].state == values.state &&
-        data[i].city == values.city &&
+        data[i].country == country &&
+        data[i].state == state &&
+        data[i].city == city &&
         data[i].campus ==campus
       ) {
         floorList.push({ name: data[i].floor });
