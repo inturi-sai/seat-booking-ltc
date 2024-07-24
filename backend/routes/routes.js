@@ -35,5 +35,6 @@ router.get('/getAllocationForHOEMatrix', controller.getAllocationForHOEMatrix);
 // router.get('/getAllocationForManagerMatrix',controller.getAllocationForManagerMatrix);
 router.get('/getBUByFloor',controller.getBUByFloor);
 router.get('/getAllocationForBUwise',controller.getAllocationForBUwise);
+router.get('/getManagersByFloor',controller.getManagersByFloor);
 
 module.exports = router;

@@ -427,27 +427,27 @@ const updateEmployeeSeatData = async (id, seatData) => {
   }
 };
 
-const getBuQuery=(type,whereClause)=>{
-    let sql=''
-    if(type=="bu"){
-      sql=`select sa.bu_id,bu.name as bu_name,sa.country,sa.state,sa.city,sa.campus,sa.floor,SUM(array_length(sa.seats, 1)) as total,SUM(array_length(ma.seats_array, 1)) as allocated from seat_allocation as sa INNER JOIN manager_allocation as ma ON(sa.bu_id=ma.hoe_id) INNER JOIN business_unit as bu ON(bu.id=ma.hoe_id) ${whereClause}
-        group by sa.bu_id,sa.country,sa.state,sa.city,sa.campus,sa.floor,bu.id`
-    }
-    return sql;
-    }
-    const getAllocatedBuByFloorCount=async(values,whereClause,type)=>{ 
-      const query=getBuQuery(type,whereClause) 
-         try {
-          const { rows } = await pool.query(query,values); 
-          return rows;
-        } catch (err) {
-          console.error('Error executing query', err);
-          throw err;
-        }
-    }
+const getBuQuery = (type, whereClause) => {
+  let sql = "";
+  if (type == "bu") {
+    sql = `select sa.bu_id,bu.name as bu_name,sa.country,sa.state,sa.city,sa.campus,sa.floor,SUM(array_length(sa.seats, 1)) as total,SUM(array_length(ma.seats_array, 1)) as allocated from seat_allocation as sa INNER JOIN manager_allocation as ma ON(sa.bu_id=ma.hoe_id) INNER JOIN business_unit as bu ON(bu.id=ma.hoe_id) ${whereClause}
+        group by sa.bu_id,sa.country,sa.state,sa.city,sa.campus,sa.floor,bu.id`;
+  }
+  return sql;
+};
+const getAllocatedBuByFloorCount = async (values, whereClause, type) => {
+  const query = getBuQuery(type, whereClause);
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error("Error executing query", err);
+    throw err;
+  }
+};
 
-const getAllocationForBUwise=async(req)=>{ 
-  const { country, state, city, floor,type,campus,bu} = req.query;
+const getAllocationForBUwise = async (req) => {
+  const { country, state, city, floor, type, campus, bu } = req.query;
   let values = [];
   let whereConditions = [];
   let index = 1;
@@ -475,21 +475,37 @@ const getAllocationForBUwise=async(req)=>{
     values.push(parseInt(floor, 10));
     whereConditions.push(`sa.floor = $${index}`);
     index++;
-  } 
+  }
   if (bu) {
     values.push(parseInt(floor, 10));
     whereConditions.push(`sa.bu_id = $${index}`);
     index++;
-  } 
-  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-  if(type=="bu"){
-    const allocatedCount = await getAllocatedBuByFloorCount(values,whereClause,type); 
-    return allocatedCount;
-  }else{
-     return []
-  }  
   }
+  const whereClause =
+    whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
+  if (type == "bu") {
+    const allocatedCount = await getAllocatedBuByFloorCount(
+      values,
+      whereClause,
+      type
+    );
+    return allocatedCount;
+  } else {
+    return [];
+  }
+};
 
+const getManagersByFloor = async (values) => {
+  const query = `select ma.id as manager_id,ma.first_name,ma.last_name,bu.name as bu_name,sa.country,sa.state,sa.city,sa.campus,sa.floor,sa.bu_id,SUM(array_length(sa.seats, 1)) as total,SUM(array_length(ma.seats_array, 1)) as allocated from seat_allocation as sa INNER JOIN manager_allocation as ma ON(sa.bu_id=ma.hoe_id) INNER JOIN business_unit as bu ON(bu.id=ma.hoe_id) WHERE LOWER(sa.country) = LOWER($1) AND LOWER(sa.state) = LOWER($2) AND LOWER(sa.city) = LOWER($3) AND sa.floor = $4 AND LOWER(sa.campus) = LOWER($5) 
+ AND sa.bu_id = $6  group by sa.bu_id,sa.country,sa.state,sa.city,sa.campus,sa.floor,bu.id,ma.id`;
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error("Error executing query", err);
+    throw err;
+  }
+};
 module.exports = {
   insertUser,
   findUserByEmailAndPassword,
@@ -511,5 +527,6 @@ module.exports = {
   getEmployeesByManagerIdFromTable,
   updateEmployeeSeatData,
   getAllocationForBUwise,
-  getAllocationForAdminMatrix
+  getAllocationForAdminMatrix,
+  getManagersByFloor
 };
