@@ -219,7 +219,6 @@ const ConfigureSeatAllocation = () => {
                 >
                   <MenuItem value={"india"}>India</MenuItem>
                   <MenuItem value={"uk"}>UK</MenuItem>
-                  <MenuItem value={"us"}>US</MenuItem>
                 </Select>
                 {errors.country?<div className="fontFamily" style={{color:"red",paddingTop:"5px", fontSize:"14px"}}>Country is required</div>:""}
 
@@ -239,8 +238,6 @@ const ConfigureSeatAllocation = () => {
                   onChange={handleChange}
                 >
                   <MenuItem value={"telangana"}>Telangana</MenuItem>
-                  <MenuItem value={"karnataka"}>Karnataka</MenuItem>
-                  <MenuItem value={"alaska"}>Alaska</MenuItem>
                   <MenuItem value={"england"}>England</MenuItem>
 
                 </Select>
@@ -260,12 +257,7 @@ const ConfigureSeatAllocation = () => {
                   onChange={handleChange}
                 >
                   <MenuItem value={"hyderabad"}>Hyderabad</MenuItem>
-                  <MenuItem value={"bangalore"}>Bangalore</MenuItem>
-                  <MenuItem value={"denver"}>Denver</MenuItem>
-                  <MenuItem value={"sanfransisco"}>Sanfransisco</MenuItem>
                   <MenuItem value={"london"}>London</MenuItem>
-                  <MenuItem value={"Sunderland"}>Sunderland</MenuItem>                  
-                  <MenuItem value={"bangalore"}>Bristol</MenuItem>
 
                 </Select>
                 {errors.city?<div className="fontFamily" style={{color:"red",paddingTop:"5px", fontSize:"12px"}}>City is required</div>:""}
@@ -285,7 +277,7 @@ const ConfigureSeatAllocation = () => {
                   onChange={handleChange}
                 >
                   <MenuItem value={"knowledge city"}>Knowledge City</MenuItem>
-                  <MenuItem value={"we work"}>We Work</MenuItem>
+                  <MenuItem value={"Gresham Street"}>Gresham Street</MenuItem>
                   <MenuItem value={"knowledge park"}>Knowledge Park</MenuItem> 
                   
                 </Select>
@@ -307,6 +299,7 @@ const ConfigureSeatAllocation = () => {
                 >
                   <MenuItem value={"5"}>5</MenuItem>
                   <MenuItem value={"6"}>6</MenuItem>
+                  <MenuItem value={"6"}>7</MenuItem>
                   <MenuItem value={"10"}>10</MenuItem>
                 </Select>
                 {errors.floor?<div className="fontFamily" style={{color:"red",paddingTop:"5px", fontSize:"12px"}}>Floor is required</div>:""}
