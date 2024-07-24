@@ -22,114 +22,278 @@ const findUserByEmailAndPassword = (email, password, callback) => {
   });
 };
 
-const getBu=async()=>{
-    const query = 'SELECT * FROM business_unit';
-    const values = [];
-  
-    try {
-      const { rows } = await pool.query(query, values);
-      return rows;
-    } catch (err) {
-      console.error('Error executing query', err);
-      throw err;
-    }
+const getBu = async () => {
+  const query = 'SELECT * FROM business_unit';
+  const values = [];
+
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
   }
-
-const getAllocatedSetsAdmin=async()=>{
-    const query = 'SELECT * FROM seat_allocation';
-    const values = [];
-  
-    try {
-      const { rows } = await pool.query(query, values);
-      return rows;
-    } catch (err) {
-      console.error('Error executing query', err);
-      throw err;
-    }
 }
 
-const getSeatingCapacityAdmin=async()=>{
-    const query = 'SELECT * FROM seating_capacity';
-    const values = [];
-  
-    try {
-      const { rows } = await pool.query(query, values);
-      return rows;
-    } catch (err) {
-      console.error('Error executing query', err);
-      throw err;
-    }
+const getAllocatedSetsAdmin = async () => {
+  const query = 'SELECT * FROM seat_allocation';
+  const values = [];
+
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
 }
 
-const createSeatingCapacityAdmin=async(body)=>{
-  const {country,state,city,floor,capacity,campus}=body
-  const values= [country,state,city,campus,parseInt(floor),parseInt(capacity)]
+const getSeatingCapacityAdmin = async () => {
+  const query = 'SELECT * FROM seating_capacity';
+  const values = [];
+
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
+}
+
+const createSeatingCapacityAdmin = async (body) => {
+  const { country, state, city, floor, capacity, campus } = body
+  const values = [country, state, city, campus, parseInt(floor), parseInt(capacity)]
   const query = 'INSERT INTO seating_capacity (country,state,city,campus,floor,capacity) VALUES ($1, $2, $3,$4,$5,$6);';
   //  return values
-    try {
-      const { rows } = await pool.query(query, values);
-      return rows;
-    } catch (err) {
-      console.error('Error executing query', err);
-      throw err;
-    }
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
 }
 
-const updateSeatingCapacityAdmin=async(id,capacity)=>{ 
+const updateSeatingCapacityAdmin = async (id, capacity) => {
   const query = `
   UPDATE seating_capacity
   SET capacity = $1
   WHERE id = $2;
 `;
-  const values = [parseInt(capacity), id]; 
-    try {
-      const { rows } = await pool.query(query, values);
-      return rows;
-    } catch (err) {
-      console.error('Error executing query', err);
-      throw err;
-    }
+  const values = [parseInt(capacity), id];
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
 }
 
-const deleteSeatingCapacityAdmin=async(id)=>{ 
+const deleteSeatingCapacityAdmin = async (id) => {
   const query = `
   DELETE FROM seating_capacity
   WHERE id = $1
 `;
-const values = [id];
+  const values = [id];
 
-try {
-  const res = await pool.query(query, values);
-  return res;
-} catch (error) {
-  console.error('Error executing query:', error);
-  throw error;
-}
+  try {
+    const res = await pool.query(query, values);
+    return res;
+  } catch (error) {
+    console.error('Error executing query:', error);
+    throw error;
+  }
 }
 
-const createAllocatedSetsAdmin=async(body)=>{
-  const {country,state,city,campus,floor,bu,seats}=body
-  const values= [country,state,city,campus,parseInt(floor),bu,seats,seats.length>0?seats.length:0] 
+const createAllocatedSetsAdmin = async (body) => {
+  const { country, state, city, campus, floor, bu, seats } = body
+  const values = [country, state, city, campus, parseInt(floor), bu, seats, seats.length > 0 ? seats.length : 0]
   const query = 'INSERT INTO seat_allocation (country,state,city,campus,floor,bu_id,seats,total) VALUES ($1, $2, $3,$4,$5,$6,$7::int[],$8);';
-    try {
-      const { rows } = await pool.query(query, values);
-      return rows;
-    } catch (err) {
-      console.error('Error executing query', err);
-      throw err;
-    }
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
 }
 
-const getSeatingCapacityAdminByFilter=async(values)=>{ 
+const getSeatingCapacityAdminByFilter = async (values) => {
   const query = `SELECT SUM(capacity) FROM seating_capacity where country=$1 and state=$2 and city=$3 and floor=$4`;
-     try {
-      const { rows } = await pool.query(query, values);
-      return rows;
-    } catch (err) {
-      console.error('Error executing query', err);
-      throw err;
-    }
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
 }
+
+const getQuery = (type, whereClause) => {
+  let query = ""
+  if (type == "country") {
+    query = ` SELECT country,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country`
+  } else if (type == "state") {
+    query = ` SELECT country,state,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state`
+  } else if (type == "city") {
+    query = ` SELECT country,state,city,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city`;
+  } else if (type == "floor") {
+    query = ` SELECT country,state,city,floor,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city,floor`;
+  }
+  return query;
+}
+const getQueryCapacity = (type, whereClause) => {
+  let query = ""
+  if (type == "country") {
+    query = ` SELECT country,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country`;
+  } else if (type == "state") {
+    query = ` SELECT country,state,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state`;
+
+  } else if (type == "city") {
+    query = ` SELECT country,state,city,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city`;
+
+  } else if (type == "floor") {
+    query = ` SELECT country,state,city,floor,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,floor`;
+
+  }
+  return query;
+}
+const getAllocatedCount = async (values, whereClause, type) => {
+  const query = getQuery(type, whereClause)
+  try {
+    const { rows } = await pool.query(query, values);
+    console.log(rows)
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
+}
+const getCapacity = async (values, whereClause, type) => {
+  const query = getQueryCapacity(type, whereClause);
+  if (whereClause == "") {
+    values = []
+  }
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
+}
+const mergeArrays = (array1, array2, key) => {
+  let merged = {};
+  // Merge array1 into merged object
+  array1.forEach(item => {
+    merged[item[key]] = { ...merged[item[key]], ...item };
+  });
+  // Merge array2 into merged object
+  array2.forEach(item => {
+    let obj = { ...item, unallocated: merged[item[key]].total - item.allocated }
+    merged[item[key]] = { ...merged[item[key]], ...obj };
+  });
+  // Convert merged object back to array
+  let mergedArray = Object.values(merged);
+
+  return mergedArray;
+}
+
+// models.js
+
+
+
+
+const getHOETotalAllocatedQuery = async () => {
+  const sql = `select bu_id,SUM(total) as total from seat_allocation WHERE bu_id = $1 group by bu_id`;
+  return sql;
+}
+const getHOETotalAllocatedCount = async (buId) => {
+  let values = [buId];
+  const query = await getHOETotalAllocatedQuery()
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
+}
+const getHOEManagerAllocatedQuery = async (whereClause, type) => {
+  let sql = ''
+  if (type == "manager") {
+    sql = `select hoe_id as bu_id,business_unit,id as manager,first_name,last_name, SUM(array_length(seats_array, 1)) AS allocated  from manager_allocation ${whereClause} group by hoe_id,business_unit,id`;
+  } else {
+    sql = `select hoe_id as bu_id,business_unit, SUM(array_length(seats_array, 1)) AS allocated  from manager_allocation ${whereClause} group by hoe_id,business_unit`;
+
+  }
+  return sql;
+}
+const getHOEManagerAllocatedCount = async (whereClause, values, type) => {
+  const query = await getHOEManagerAllocatedQuery(whereClause, type);
+  console.log(query, "query", values)
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
+}
+
+const getAllocationForHOEMatrix = async (req) => {
+  const { manager_id, bu_id, type } = req.query;
+  let values = [bu_id];
+  let index = 1;
+  let whereConditions = [`hoe_id = $${index}`];
+  if (manager_id && type == "manager") {
+    index++;
+    values.push(manager_id);
+    whereConditions.push(`id = $${index}`);
+  }
+  console.log(whereConditions, "whereConditions")
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+  const allocatedCount = await getHOETotalAllocatedCount(bu_id);
+  const managersCount = await getHOEManagerAllocatedCount(whereClause, values, type);
+  if (type == "manager") {
+
+  } else {
+    let mergedArray = mergeArrays(allocatedCount, managersCount, "bu_id");
+    return mergedArray;
+  }
+}
+
+const getBUByFloor = async (values) => {
+  const query = `SELECT t1.id as bu_id, t1.name, t1.manager, t2.country, t2.state, t2.city, t2.campus, t2.floor
+            FROM business_unit AS t1
+            INNER JOIN seat_allocation AS t2
+            ON t1.id = t2.bu_id where LOWER(t2.country)=LOWER($1) and LOWER(t2.state)=LOWER($2) and LOWER(t2.city)=LOWER($3) and t2.floor=$4 and LOWER(t2.campus)=LOWER($5)`;
+  try {
+    const { rows } = await pool.query(query, values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
+}
+
+
+const getSeatDataByUser = async (firstName, lastName) => {
+  try {
+    const query = `
+            SELECT seat_data, manager_name, floor, bu, campus
+            FROM employee_details
+            WHERE first_name = $1 AND last_name = $2;
+        `;
+    const { rows } = await pool.query(query, [firstName, lastName]);
+    return rows; // Return seat data array
+  } catch (error) {
+    console.error('Error fetching seat data:', error);
+    throw error; // Propagate the error to be handled in the controller
+  }
+};
 
 const getHOEFromTable = async (id) => {
   const sql = `SELECT t1.id, t1.name, t1.manager, t1.role, t2.country, t2.state, t2.city, t2.campus, t2.floor, t2.total, t2.seats
@@ -149,9 +313,9 @@ const getHOEFromTable = async (id) => {
   }
 };
 
-const getManagersByHOEIdFromTable = async (id, campus, floor) => {
-  const sql = 'SELECT * FROM manager_allocation WHERE hoe_id = $1 AND campus = $2 AND floor = $3 ORDER BY seats_array[1]';
-  const values = [id, campus, floor];
+const getManagersByHOEIdFromTable = async (id, country, state, city, campus, floor) => {
+  const sql = 'SELECT * FROM manager_allocation WHERE hoe_id = $1 AND country = $2 AND state = $3 AND city = $4 AND campus = $5 AND floor = $6 ORDER BY seats_array[1]';
+  const values = [id, country, state, city, campus, floor];
 
   try {
     const { rows } = await pool.query(sql, values);
@@ -175,168 +339,55 @@ const updateManagerData = async (id, seats) => {
     throw err;
   }
 };
-const getQuery=(type,whereClause)=>{
- let query=""
-  if(type=="country"){
-   query = ` SELECT country,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country`
-  }else if(type=="state"){
-   query = ` SELECT country,state,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state`
-  }else if(type=="city"){
-     query = ` SELECT country,state,city,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city`;
-  }else if(type=="floor"){
-     query = ` SELECT country,state,city,floor,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city,floor`;
-  }
-  return query;
-}
-const getQueryCapacity=(type,whereClause)=>{
-  let query=""
-  if(type=="country"){
-    query = ` SELECT country,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country`;
-  }else if(type=="state"){
-    query = ` SELECT country,state,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state`;
 
-  }else if(type=="city"){
-    query = ` SELECT country,state,city,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city`;
+const getManagerFromTable = async (id) => {
+  const sql = `SELECT t1.first_name, t1.last_name, t1.business_unit, t1.campus, t1.floor, t1.seats_array, t1.hoe_id,
+               t2.country, t2.state, t2.city, t2.total
+               FROM  manager_allocation  AS t1
+               INNER JOIN seat_allocation as t2
+               on t1.hoe_id = t2.bu_id AND t1.campus = t2.campus AND t1.floor = t2.floor
+               WHERE t1.id =$1`;
+  const values = [id];
 
-  }else if(type=="floor"){
-    query = ` SELECT country,state,city,floor,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,floor`;
-
-  }
-  return query;
-}
-const getAllocatedCount=async(values,whereClause,type)=>{
-  const query=getQuery(type,whereClause)
-     try {
-      const { rows } = await pool.query(query,values);
-      console.log(rows)
-      return rows;
-    } catch (err) {
-      console.error('Error executing query', err);
-      throw err;
-    }
-}
-const getCapacity=async(values,whereClause,type)=>{
-  const query=getQueryCapacity(type,whereClause);
-  if(whereClause==""){
-    values=[]
-  }
-     try {
-      const { rows } = await pool.query(query,values);
-      return rows;
-    } catch (err) {
-      console.error('Error executing query', err);
-      throw err;
-    }
-}
-const mergeArrays=(array1, array2, key)=> {
-  let merged = {};
-  // Merge array1 into merged object
-  array1.forEach(item => {
-      merged[item[key]] = { ...merged[item[key]], ...item };
-  });
-  // Merge array2 into merged object
-  array2.forEach(item => {
-    let obj={...item,unallocated:merged[item[key]].total-item.allocated} 
-      merged[item[key]] = { ...merged[item[key]], ...obj };
-  });
-  // Convert merged object back to array
-  let mergedArray = Object.values(merged);
-
-  return mergedArray;
-}
-
-// models.js
-
-
-
-
-const getHOETotalAllocatedQuery=async()=>{
-    const sql = `select bu_id,SUM(total) as total from seat_allocation WHERE bu_id = $1 group by bu_id`;
-    return sql;
-}
-const getHOETotalAllocatedCount=async(buId)=>{
-  let values = [buId];
-  const query=await getHOETotalAllocatedQuery()
-     try {
-      const { rows } = await pool.query(query,values);
-      return rows;
-    } catch (err) {
-      console.error('Error executing query', err);
-      throw err;
-    }
-}
-const getHOEManagerAllocatedQuery=async(whereClause,type)=>{
-  let sql=''
-  if(type=="manager"){
-    sql = `select hoe_id as bu_id,business_unit,id as manager,first_name,last_name, SUM(array_length(seats_array, 1)) AS allocated  from manager_allocation ${whereClause} group by hoe_id,business_unit,id`;
-  }else{
-    sql = `select hoe_id as bu_id,business_unit, SUM(array_length(seats_array, 1)) AS allocated  from manager_allocation ${whereClause} group by hoe_id,business_unit`;
-
-  }
-  return sql;
-}
-const getHOEManagerAllocatedCount=async(whereClause,values,type)=>{
-const query=await getHOEManagerAllocatedQuery(whereClause,type);
-console.log(query,"query",values) 
-   try {
-    const { rows } = await pool.query(query,values);
+  try {
+    const { rows } = await pool.query(sql, values);
+    //console.log("this is from getEmployess",rows);
     return rows;
   } catch (err) {
     console.error('Error executing query', err);
     throw err;
   }
-}
+};
 
-const getAllocationForHOEMatrix=async(req)=>{ 
-  const { manager_id,bu_id,type } = req.query;
-  let values = [bu_id];
-  let index = 1;
-  let whereConditions = [`hoe_id = $${index}`];
-  if (manager_id && type=="manager") {
-    index++;
-    values.push(manager_id);
-    whereConditions.push(`id = $${index}`);
+const getEmployeesByManagerIdFromTable = async (id) => {
+  const sql = 'SELECT * FROM  employee_allocation  WHERE manager_id =$1 ORDER BY id';
+  const values = [id];
+
+  try {
+    const { rows } = await pool.query(sql, values);
+    //console.log("getEmployess",rows);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
   }
-  console.log(whereConditions,"whereConditions")
-  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-  const allocatedCount = await getHOETotalAllocatedCount(bu_id);
-  const managersCount = await getHOEManagerAllocatedCount(whereClause,values,type);
-  if(type=="manager"){
+};
 
-  }else{
-    let mergedArray = mergeArrays(allocatedCount,managersCount, "bu_id");
-    return mergedArray;
+
+const updateEmployeeSeatData = async (id, seatData) => {
+  const sql = 'UPDATE employee_allocation SET seat_data = $1 WHERE id = $2'
+  const values = [JSON.stringify(seatData), id];
+  // console.log("seatData", seatData);
+  // console.log("id", id);
+
+  try {
+    const result = await pool.query(sql, values);
+    return result;
+
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
   }
-  }
-
-  const getBUByFloor=async(values)=>{ 
-    const query = `SELECT t1.id as bu_id, t1.name, t1.manager, t2.country, t2.state, t2.city, t2.campus, t2.floor
-            FROM business_unit AS t1
-            INNER JOIN seat_allocation AS t2
-            ON t1.id = t2.bu_id where LOWER(t2.country)=LOWER($1) and LOWER(t2.state)=LOWER($2) and LOWER(t2.city)=LOWER($3) and t2.floor=$4 and LOWER(t2.campus)=LOWER($5)`;
-       try {
-        const { rows } = await pool.query(query, values);
-        return rows;
-      } catch (err) {
-        console.error('Error executing query', err);
-        throw err;
-      }
-  }
-
-
-  const getSeatDataByUser = async (firstName, lastName) => {
-    try {
-        const query = `
-            SELECT seat_data, manager_name, floor, bu, campus
-            FROM employee_details
-            WHERE first_name = $1 AND last_name = $2;
-        `;
-        const { rows } = await pool.query(query, [firstName, lastName]);
-        return rows; // Return seat data array
-    } catch (error) {
-        console.error('Error fetching seat data:', error);
-        throw error; // Propagate the error to be handled in the controller
-    }
 };
 
 module.exports = {
@@ -350,11 +401,13 @@ module.exports = {
   updateSeatingCapacityAdmin,
   createSeatingCapacityAdmin,
   getSeatingCapacityAdmin,
-  getHOEFromTable, 
-  getManagersByHOEIdFromTable, 
-  updateManagerData,
-  getAllocationForAdminMatrix,
   getAllocationForHOEMatrix,
   getBUByFloor,
-  getSeatDataByUser
+  getSeatDataByUser,
+  getHOEFromTable,
+  getManagersByHOEIdFromTable,
+  updateManagerData,
+  getManagerFromTable,
+  getEmployeesByManagerIdFromTable,
+  updateEmployeeSeatData
 };
