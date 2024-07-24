@@ -30,9 +30,42 @@ exports.login = (req, res) => {
     }
 
     const user = rows[0];
-    const newToken = jwt.sign({ email: user.email }, JWT_SECRET);
-    res.status(200).json({ message: 'Login successful', token: newToken, role: user.role });
+    const newToken = jwt.sign({ email: user.email, firstName: user.first_name, lastName: user.last_name, role: user.role }, JWT_SECRET);
+
+    // Log the new token for debugging
+    console.log('Login successful');
+    console.log('Generated JWT Token:', newToken);
+    console.log('Role:', user.role);
+    console.log('First Name:', user.first_name);
+    console.log('Last Name:', user.last_name);
+
+    res.status(200).json({
+      message: 'Login successful',
+      token: newToken,
+      role: user.role,
+      firstName: user.first_name,
+      lastName: user.last_name
+    });
   });
+};
+
+exports.getSeatData = async (req, res) => {
+  const { firstName, lastName } = req.query;
+
+  try {
+    // Call the model function to get seat data
+    const seatData = await models.getSeatDataByUser(firstName, lastName);
+
+    if (seatData.length === 0) {
+      return res.status(404).json({ message: 'No seat data found' });
+    }
+
+    // Respond with the fetched seat data
+    res.status(200).json(seatData);
+  } catch (error) {
+    console.error('Error fetching seat data:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 };
 
 exports.getBu = async (req, res) => {
@@ -194,3 +227,4 @@ exports.updateManagerData = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+

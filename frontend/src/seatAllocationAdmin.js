@@ -13,6 +13,8 @@ import { baseurl } from "./utils";
 
 import "./seatAllocationAdmin.css"; // Make sure you have the correct path and name
 
+
+
 const initialBuState = {
   country: "india",
   state: "telangana",
@@ -751,7 +753,7 @@ const SeatAllocationAdmin = () => {
                   </div>
             </Box>
           </Grid>
-          {/* )} */}
+          
         </Grid>
       </Grid>
     </div>

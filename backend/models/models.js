@@ -62,9 +62,9 @@ const getSeatingCapacityAdmin=async()=>{
 }
 
 const createSeatingCapacityAdmin=async(body)=>{
-  const {country,state,city,floor,capacity}=body
-  const values= [country,state,city,parseInt(floor),parseInt(capacity)]
-  const query = 'INSERT INTO seating_capacity (country,state,city,floor,capacity) VALUES ($1, $2, $3,$4,$5);';
+  const {country,state,city,floor,capacity,campus}=body
+  const values= [country,state,city,campus,parseInt(floor),parseInt(capacity)]
+  const query = 'INSERT INTO seating_capacity (country,state,city,campus,floor,capacity) VALUES ($1, $2, $3,$4,$5,$6);';
   //  return values
     try {
       const { rows } = await pool.query(query, values);
@@ -108,11 +108,9 @@ try {
 }
 
 const createAllocatedSetsAdmin=async(body)=>{
-  const {country,state,city,floor,bu,seats}=body
-  const values= [country,state,city,parseInt(floor),bu,seats,seats.length>0?seats.length:0]
-  console.log(values,"jjjjjj")
-  const query = 'INSERT INTO seat_allocation (country,state,city,floor,bu_id,seats,total) VALUES ($1, $2, $3,$4,$5,$6::int[],$7);';
-  //  return values
+  const {country,state,city,campus,floor,bu,seats}=body
+  const values= [country,state,city,campus,parseInt(floor),bu,seats,seats.length>0?seats.length:0] 
+  const query = 'INSERT INTO seat_allocation (country,state,city,campus,floor,bu_id,seats,total) VALUES ($1, $2, $3,$4,$5,$6,$7::int[],$8);';
     try {
       const { rows } = await pool.query(query, values);
       return rows;
@@ -122,8 +120,7 @@ const createAllocatedSetsAdmin=async(body)=>{
     }
 }
 
-const getSeatingCapacityAdminByFilter=async(values)=>{
-  console.log(values,"5555")
+const getSeatingCapacityAdminByFilter=async(values)=>{ 
   const query = `SELECT SUM(capacity) FROM seating_capacity where country=$1 and state=$2 and city=$3 and floor=$4`;
      try {
       const { rows } = await pool.query(query, values);
@@ -178,6 +175,127 @@ const updateManagerData = async (id, seats) => {
     throw err;
   }
 };
+const getQuery=(type,whereClause)=>{
+ let query=""
+  if(type=="country"){
+   query = ` SELECT country,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country`
+  }else if(type=="state"){
+   query = ` SELECT country,state,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state`
+  }else if(type=="city"){
+     query = ` SELECT country,state,city,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city`;
+  }else if(type=="floor"){
+     query = ` SELECT country,state,city,floor,SUM(total) as allocated FROM seat_allocation ${whereClause}  GROUP BY country, state,city,floor`;
+  }
+  return query;
+}
+const getQueryCapacity=(type,whereClause)=>{
+  let query=""
+  if(type=="country"){
+    query = ` SELECT country,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country`;
+  }else if(type=="state"){
+    query = ` SELECT country,state,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state`;
+
+  }else if(type=="city"){
+    query = ` SELECT country,state,city,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city`;
+
+  }else if(type=="floor"){
+    query = ` SELECT country,state,city,floor,SUM(capacity) as total FROM seating_capacity ${whereClause}  GROUP BY country, state,city,floor`;
+
+  }
+  return query;
+}
+const getAllocatedCount=async(values,whereClause,type)=>{
+  const query=getQuery(type,whereClause)
+     try {
+      const { rows } = await pool.query(query,values);
+      console.log(rows)
+      return rows;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+}
+const getCapacity=async(values,whereClause,type)=>{
+  const query=getQueryCapacity(type,whereClause);
+  if(whereClause==""){
+    values=[]
+  }
+     try {
+      const { rows } = await pool.query(query,values);
+      return rows;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+}
+const mergeArrays=(array1, array2, key)=> {
+  let merged = {};
+  // Merge array1 into merged object
+  array1.forEach(item => {
+      merged[item[key]] = { ...merged[item[key]], ...item };
+  });
+  // Merge array2 into merged object
+  array2.forEach(item => {
+    let obj={...item,unallocated:merged[item[key]].total-item.allocated} 
+      merged[item[key]] = { ...merged[item[key]], ...obj };
+  });
+  // Convert merged object back to array
+  let mergedArray = Object.values(merged);
+
+  return mergedArray;
+}
+
+// models.js
+
+
+
+
+const getHOETotalAllocatedQuery=async()=>{
+    const sql = `select bu_id,SUM(total) as total from seat_allocation WHERE bu_id = $1 group by bu_id`;
+    return sql;
+}
+const getHOETotalAllocatedCount=async(buId)=>{
+  let values = [buId];
+  const query=await getHOETotalAllocatedQuery()
+     try {
+      const { rows } = await pool.query(query,values);
+      return rows;
+    } catch (err) {
+      console.error('Error executing query', err);
+      throw err;
+    }
+}
+const getHOEManagerAllocatedQuery=async(whereClause)=>{
+  const sql = `select hoe_id as bu_id,business_unit, SUM(array_length(seats_array, 1)) AS allocated  from manager_allocation ${whereClause} group by hoe_id,business_unit`;
+  return sql;
+}
+const getHOEManagerAllocatedCount=async(whereClause,values)=>{
+const query=await getHOEManagerAllocatedQuery(whereClause); 
+   try {
+    const { rows } = await pool.query(query,values);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err);
+    throw err;
+  }
+}
+
+
+
+  const getSeatDataByUser = async (firstName, lastName) => {
+    try {
+        const query = `
+            SELECT seat_data, manager_name, floor, bu, campus
+            FROM employee_details
+            WHERE first_name = $1 AND last_name = $2;
+        `;
+        const { rows } = await pool.query(query, [firstName, lastName]);
+        return rows; // Return seat data array
+    } catch (error) {
+        console.error('Error fetching seat data:', error);
+        throw error; // Propagate the error to be handled in the controller
+    }
+};
 
 module.exports = {
   insertUser,
@@ -192,6 +310,6 @@ module.exports = {
   getSeatingCapacityAdmin,
   getHOEFromTable, 
   getManagersByHOEIdFromTable, 
-  updateManagerData
+  updateManagerData,
+  getSeatDataByUser
 };
-
