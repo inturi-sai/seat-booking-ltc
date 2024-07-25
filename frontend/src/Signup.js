@@ -79,7 +79,7 @@ export default function Signup() {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/signup",
+        "http://34.46.69.235:3001/signup",
         dataToSubmit
       );
       console.log(response.data);

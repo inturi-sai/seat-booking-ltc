@@ -44,7 +44,7 @@ const Hoe = () => {
   /*-------- getHOEDetails function get HOE and Managers details from database --------*/
   const getHOEDetails = async (id) => {
     try {
-      const response1 = await axios.get(`http://localhost:8080/getHOEFromTable/${id}`);
+      const response1 = await axios.get(`http://34.46.69.235:3001/getHOEFromTable/${id}`);
 
       await Promise.all([
         setHoeList(response1.data),
@@ -68,7 +68,7 @@ const Hoe = () => {
 
   const getManagerDetails = useCallback(async (id) => {
     try {
-      const response2 = await axios.get(`http://localhost:8080/getManagersByHOEIdFromTable/${id}`, {
+      const response2 = await axios.get(`http://34.46.69.235:3001/getManagersByHOEIdFromTable/${id}`, {
         params: {
           campus: selectedCampus,
           floor: selectedFloor,
@@ -133,7 +133,7 @@ const Hoe = () => {
     selectedSeats.sort((a, b) => a - b);
     if (selectedManager && selectedSeats.length > 0) {
       try {
-        await axios.put(`http://localhost:8080/updateManagerData/${selectedManager.id}`, {
+        await axios.put(`http://34.46.69.235:3001/updateManagerData/${selectedManager.id}`, {
           seats: selectedSeats
         });
         setSelectedSeats([]);

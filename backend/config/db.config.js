@@ -1,8 +1,8 @@
 module.exports = {
-  host: "localhost",
+  host: "34.45.142.185",
   user: "postgres",
-  password: "12345678",
-  database: "seating-allocation-db",
+  password: "Creative@123",
+  database: "postgres",
   port: 5432,
 };
 // db.config.js

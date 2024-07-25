@@ -52,8 +52,8 @@ const Manager = () => {
     /*-------- getHOEDetails function get HOE and Managers details from database --------*/
     const getManagerDetails = async (id) => {
         try {
-            const response1 = await axios.get(`http://localhost:8080/getManagerFromTable/${id}`);
-            const response2 = await axios.get(`http://localhost:8080/getEmployeesByManagerIdFromTable/${id}`);
+            const response1 = await axios.get(`http://34.46.69.235:3001/getManagerFromTable/${id}`);
+            const response2 = await axios.get(`http://34.46.69.235:3001/getEmployeesByManagerIdFromTable/${id}`);
             // console.log(response1.data);
             // console.log('Manager data:', response1.data[0]);
             //  console.log("Employees", response2.data);
@@ -137,7 +137,7 @@ const Manager = () => {
         //console.log(typeof (selectedSeats));
         if (selectedEmployee) {
             try {
-                await axios.put(`http://localhost:8080/updateEmployeeSeatData/${selectedEmployee.id}`, {
+                await axios.put(`http://34.46.69.235:3001/updateEmployeeSeatData/${selectedEmployee.id}`, {
                     seats: seatData
                 });
                 setSelectedSeats("WFH");

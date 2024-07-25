@@ -51,7 +51,7 @@ export default function Login() {
   //   }
 
   //   try {
-  //     const response = await axios.post("http://localhost:8080/", {
+  //     const response = await axios.post("http://34.46.69.235:3001/", {
   //       email,
   //       password,
   //     });
@@ -91,7 +91,7 @@ export default function Login() {
     }
   
     try {
-      const response = await axios.post("http://localhost:8080/", {
+      const response = await axios.post("http://34.46.69.235:3001/", {
         email,
         password,
       });

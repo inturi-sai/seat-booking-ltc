@@ -18,7 +18,7 @@ export default function Employee() {
   useEffect(() => {
     const fetchSeatData = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/getSeatData', {
+        const response = await axios.get('http://34.46.69.235:3001/getSeatData', {
           params: { firstName, lastName }
         });
         console.log('Fetched seat data:', response.data);
