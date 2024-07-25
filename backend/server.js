@@ -9,7 +9,13 @@ const routes = require('./routes/routes');
 
 app.use(bodyParser.json());
 
-app.use(cors());
+app.use(cors({
+  origin : 'http://34.46.69.235'
+}));
+
+app.post('/signup', (req, res) => {
+
+});
 
 app.use(routes);
 
