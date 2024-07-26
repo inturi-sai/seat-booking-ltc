@@ -531,17 +531,51 @@ const SeatAllocationAdmin = () => {
     }
   };
   const handleAllocationToHOE = async (obj) => {
-    await axios
-      .post(`${baseurl}/createAllocatedSetsAdmin`, obj)
-      .then((res) => {
-        if (res.data) {
-          setAllocateSeatSecFlag(false);
-          setOpenSnackbar(true); 
+    console.log(maxSeats);
+    try {
+      const response = await axios.get(${baseurl}/getDetailsBeforeAllocation, {
+        params: {
+          country: values.country,
+          state: values.state,
+          city: values.city,
+          campus: values.campus,
+          floor: values.floor,
+          businessId: values.bu
         }
       })
-      .catch((err) => {
-        console.log(err);
-      });
+
+      if (response.data.length > 0) {
+        const combinedArray = response.data[0].seats.concat(obj.seats).sort((a, b) => a - b);
+
+        await axios
+          .put(${baseurl}/updateToSameRow, { ...obj, seats: combinedArray })
+          .then((res) => {
+            if (res.data) {
+              setAllocateSeatSecFlag(false);
+              setOpenSnackbar(true);
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+
+      else {
+        await axios
+          .post(${baseurl}/createAllocatedSetsAdmin, {...obj, total:maxSeats})
+          .then((res) => {
+            if (res.data) {
+              setAllocateSeatSecFlag(false);
+              setOpenSnackbar(true);
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+    } catch (err) {
+      console.error('Error fetching data:', err);
+    }
   };
   const handleSeatingCapacity = () => {
     navigate("/configureSeatAllocation");
